@@ -1,0 +1,66 @@
+import 'package:hive/hive.dart';
+import 'package:samapp/models/habit.dart';
+import 'package:uuid/uuid.dart';
+
+class HabitService {
+  final Box<Habit> _habitBox = Hive.box<Habit>('habits');
+  final _uuid = const Uuid();
+
+  List<Habit> getAllHabits() {
+    return _habitBox.values.toList();
+  }
+
+  Future<void> addHabit(Habit habit) async {
+    habit.id = _uuid.v4();
+    await _habitBox.put(habit.id, habit);
+  }
+
+  Future<void> updateHabit(Habit habit) async {
+    await _habitBox.put(habit.id, habit);
+  }
+
+  Future<void> deleteHabit(String habitId) async {
+    await _habitBox.delete(habitId);
+  }
+
+  Future<void> toggleHabitCompletion(Habit habit) async {
+    final today = DateTime.now();
+    final todayWithoutTime = DateTime(today.year, today.month, today.day);
+
+    if (habit.completionDates.contains(todayWithoutTime)) {
+      habit.completionDates.remove(todayWithoutTime);
+    } else {
+      habit.completionDates.add(todayWithoutTime);
+    }
+    await updateHabit(habit);
+  }
+
+  int calculateStreak(Habit habit) {
+    if (habit.completionDates.isEmpty) return 0;
+
+    final dates = habit.completionDates.toSet().toList();
+    dates.sort((a, b) => b.compareTo(a)); 
+
+    int streak = 0;
+    DateTime today = DateTime.now();
+    DateTime currentDate = DateTime(today.year, today.month, today.day);
+
+    if (dates.first.isAtSameMomentAs(currentDate)) {
+      streak++;
+    } else if (dates.first.isAtSameMomentAs(currentDate.subtract(const Duration(days: 1)))) {
+      streak++;
+    } else {
+      return 0;
+    }
+
+    for (int i = 0; i < dates.length - 1; i++) {
+      final difference = dates[i].difference(dates[i + 1]).inDays;
+      if (difference == 1) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+}
