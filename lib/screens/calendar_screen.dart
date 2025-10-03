@@ -5,6 +5,7 @@ import 'package:samapp/models/task.dart';
 import 'package:samapp/models/debt.dart';
 import 'package:samapp/models/goal.dart';
 import 'package:samapp/models/habit.dart';
+import 'package:samapp/models/expense.dart';
 import 'package:samapp/screens/add_edit_task_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:samapp/utils/money_formatter.dart';
@@ -40,6 +41,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final debtBox = Hive.box<Debt>('debts');
     final goalBox = Hive.box<Goal>('goals');
     final habitBox = Hive.box<Habit>('habits');
+    final expenseBox = Hive.box<Expense>('expenses');
 
     List<dynamic> events = [];
 
@@ -69,6 +71,24 @@ class _CalendarScreenState extends State<CalendarScreen> {
       if (habit.completionDates.any((date) => isSameDay(date, day))) {
         events.add({'type': 'habit', 'data': habit});
       }
+    }
+
+    // Calculate total expenses for this day
+    double totalExpenses = 0;
+    List<Expense> dayExpenses = [];
+    for (var expense in expenseBox.values) {
+      if (isSameDay(expense.date, day)) {
+        totalExpenses += expense.amount;
+        dayExpenses.add(expense);
+      }
+    }
+    
+    // Add expenses summary if there are any expenses
+    if (totalExpenses > 0) {
+      events.add({
+        'type': 'expense', 
+        'data': {'total': totalExpenses, 'expenses': dayExpenses}
+      });
     }
 
     return events;
@@ -229,6 +249,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
         title = habit.name;
         subtitle = 'Completed';
         break;
+      case 'expense':
+        final expenseData = data as Map<String, dynamic>;
+        final total = expenseData['total'] as double;
+        final expenses = expenseData['expenses'] as List<Expense>;
+        icon = Icons.attach_money;
+        color = Colors.green;
+        title = 'Total Expenses';
+        subtitle = '${formatMoney(total)} (${expenses.length} ${expenses.length == 1 ? 'transaction' : 'transactions'})';
+        break;
       default:
         icon = Icons.event;
         color = Colors.grey;
@@ -279,6 +308,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
       case 'habit':
         label = 'Habit';
         color = Colors.orange;
+        break;
+      case 'expense':
+        label = 'Expense';
+        color = Colors.green;
         break;
       default:
         label = 'Event';

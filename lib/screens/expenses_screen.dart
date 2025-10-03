@@ -18,8 +18,12 @@ class ExpensesScreen extends StatefulWidget {
   State<ExpensesScreen> createState() => _ExpensesScreenState();
 }
 
+enum ExpenseViewMode { daily, weekly, monthly, total }
+
 class _ExpensesScreenState extends State<ExpensesScreen> {
   final ExpenseService _expenseService = ExpenseService();
+  DateTime _selectedDate = DateTime.now();
+  ExpenseViewMode _viewMode = ExpenseViewMode.daily;
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +31,24 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       body: ValueListenableBuilder(
         valueListenable: Hive.box<Expense>('expenses').listenable(),
         builder: (context, Box<Expense> box, _) {
-          final expenses = box.values.toList().cast<Expense>();
-          final spendingByCategory = _expenseService.getSpendingByCategory();
+          final allExpenses = box.values.toList().cast<Expense>();
+          
+          // Filter expenses based on view mode
+          final expenses = _filterExpensesByViewMode(allExpenses);
+          
+          final totalExpenses = expenses.fold<double>(0, (sum, expense) => sum + expense.amount);
+          
+          // Get spending by category
+          final spendingByCategory = <ExpenseCategory, double>{};
+          for (var expense in expenses) {
+            spendingByCategory[expense.category] = 
+                (spendingByCategory[expense.category] ?? 0) + expense.amount;
+          }
 
           return Column(
             children: [
+              _buildDateSelector(),
+              _buildTotalExpensesCard(totalExpenses, expenses.length),
               _buildChart(spendingByCategory),
               Expanded(
                 child: _buildExpenseList(expenses),
@@ -87,27 +104,390 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     );
   }
 
+  List<Expense> _filterExpensesByViewMode(List<Expense> allExpenses) {
+    final now = _selectedDate;
+    
+    switch (_viewMode) {
+      case ExpenseViewMode.daily:
+        return allExpenses.where((expense) {
+          return expense.date.year == now.year &&
+              expense.date.month == now.month &&
+              expense.date.day == now.day;
+        }).toList();
+      
+      case ExpenseViewMode.weekly:
+        final weekStart = now.subtract(Duration(days: now.weekday - 1));
+        final weekEnd = weekStart.add(const Duration(days: 6));
+        return allExpenses.where((expense) {
+          return expense.date.isAfter(weekStart.subtract(const Duration(days: 1))) &&
+              expense.date.isBefore(weekEnd.add(const Duration(days: 1)));
+        }).toList();
+      
+      case ExpenseViewMode.monthly:
+        return allExpenses.where((expense) {
+          return expense.date.year == now.year &&
+              expense.date.month == now.month;
+        }).toList();
+      
+      case ExpenseViewMode.total:
+        return allExpenses;
+    }
+  }
+
+  String _getViewModeText() {
+    switch (_viewMode) {
+      case ExpenseViewMode.daily:
+        return DateFormat('EEEE, MMMM d, y').format(_selectedDate);
+      case ExpenseViewMode.weekly:
+        final weekStart = _selectedDate.subtract(Duration(days: _selectedDate.weekday - 1));
+        final weekEnd = weekStart.add(const Duration(days: 6));
+        return 'Week: ${DateFormat('MMM d').format(weekStart)} - ${DateFormat('MMM d, y').format(weekEnd)}';
+      case ExpenseViewMode.monthly:
+        return DateFormat('MMMM yyyy').format(_selectedDate);
+      case ExpenseViewMode.total:
+        return 'All Expenses';
+    }
+  }
+
+  void _navigatePrevious() {
+    setState(() {
+      switch (_viewMode) {
+        case ExpenseViewMode.daily:
+          _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+          break;
+        case ExpenseViewMode.weekly:
+          _selectedDate = _selectedDate.subtract(const Duration(days: 7));
+          break;
+        case ExpenseViewMode.monthly:
+          _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1, _selectedDate.day);
+          break;
+        case ExpenseViewMode.total:
+          break;
+      }
+    });
+  }
+
+  void _navigateNext() {
+    setState(() {
+      switch (_viewMode) {
+        case ExpenseViewMode.daily:
+          _selectedDate = _selectedDate.add(const Duration(days: 1));
+          break;
+        case ExpenseViewMode.weekly:
+          _selectedDate = _selectedDate.add(const Duration(days: 7));
+          break;
+        case ExpenseViewMode.monthly:
+          _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1, _selectedDate.day);
+          break;
+        case ExpenseViewMode.total:
+          break;
+      }
+    });
+  }
+
+  Widget _buildDateSelector() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isLandscape = constraints.maxWidth > 600;
+        return Container(
+          margin: EdgeInsets.symmetric(
+            horizontal: 16, 
+            vertical: isLandscape ? 6 : 12
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16, 
+            vertical: isLandscape ? 4 : 8
+          ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          PopupMenuButton<ExpenseViewMode>(
+            icon: const Icon(Icons.view_module),
+            tooltip: 'View Mode',
+            onSelected: (ExpenseViewMode mode) {
+              setState(() {
+                _viewMode = mode;
+              });
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem(
+                value: ExpenseViewMode.daily,
+                child: Row(
+                  children: [
+                    Icon(Icons.today, size: 20),
+                    SizedBox(width: 12),
+                    Text('Daily'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: ExpenseViewMode.weekly,
+                child: Row(
+                  children: [
+                    Icon(Icons.view_week, size: 20),
+                    SizedBox(width: 12),
+                    Text('Weekly'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: ExpenseViewMode.monthly,
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_month, size: 20),
+                    SizedBox(width: 12),
+                    Text('Monthly'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: ExpenseViewMode.total,
+                child: Row(
+                  children: [
+                    Icon(Icons.bar_chart, size: 20),
+                    SizedBox(width: 12),
+                    Text('Total'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_viewMode != ExpenseViewMode.total) ...[
+            IconButton(
+              icon: const Icon(Icons.chevron_left),
+              onPressed: _navigatePrevious,
+            ),
+          ],
+          Expanded(
+            child: InkWell(
+              onTap: _viewMode != ExpenseViewMode.total ? () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null) {
+                  setState(() {
+                    _selectedDate = date;
+                  });
+                }
+              } : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (_viewMode != ExpenseViewMode.total)
+                        const Icon(Icons.calendar_today, size: 18),
+                      if (_viewMode != ExpenseViewMode.total)
+                        const SizedBox(width: 8),
+                      Text(
+                        _getViewModeText(),
+                        style: TextStyle(
+                          fontSize: isLandscape ? 14 : 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (_viewMode != ExpenseViewMode.total) ...[
+            IconButton(
+              icon: const Icon(Icons.chevron_right),
+              onPressed: _navigateNext,
+            ),
+            IconButton(
+              icon: const Icon(Icons.today),
+              onPressed: () {
+                setState(() {
+                  _selectedDate = DateTime.now();
+                });
+              },
+              tooltip: 'Today',
+            ),
+          ],
+        ],
+      ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTotalExpensesCard(double total, int count) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isLandscape = constraints.maxWidth > 600;
+        return Container(
+          margin: EdgeInsets.symmetric(
+            horizontal: 16, 
+            vertical: isLandscape ? 6 : 12
+          ),
+          padding: EdgeInsets.all(isLandscape ? 12 : 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.green.shade600,
+            Colors.green.shade400,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.account_balance_wallet,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Total Expenses',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isLandscape ? 8 : 12),
+          Text(
+            formatMoney(total),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isLandscape ? 24 : 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: isLandscape ? 4 : 6),
+          Text(
+            '$count ${count == 1 ? 'transaction' : 'transactions'}',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: isLandscape ? 11 : 13,
+            ),
+          ),
+        ],
+      ),
+        );
+      },
+    );
+  }
+
   Widget _buildChart(Map<ExpenseCategory, double> spendingByCategory) {
     if (spendingByCategory.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(16),
-      child: PieChart(
-        PieChartData(
-          sections: spendingByCategory.entries.map((entry) {
-            return PieChartSectionData(
-              color: _getCategoryColor(entry.key),
-              value: entry.value,
-              title: '${entry.key.toString().split('.').last.substring(0, 1).toUpperCase()}${entry.key.toString().split('.').last.substring(1)}',
-              radius: 50,
-              titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-            );
-          }).toList(),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isLandscape = constraints.maxWidth > 600;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.all(isLandscape ? 12 : 20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
+      child: Column(
+        children: [
+          const Text(
+            'Spending by Category',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: isLandscape ? 12 : 20),
+          SizedBox(
+            height: isLandscape ? 180 : 280,
+            child: PieChart(
+              PieChartData(
+                sectionsSpace: 2,
+                centerSpaceRadius: 50,
+                sections: spendingByCategory.entries.map((entry) {
+                  final total = spendingByCategory.values.fold<double>(0, (sum, val) => sum + val);
+                  final percentage = (entry.value / total * 100).toStringAsFixed(1);
+                  return PieChartSectionData(
+                    color: _getCategoryColor(entry.key),
+                    value: entry.value,
+                    title: '$percentage%',
+                    radius: 80,
+                    titleStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black26,
+                          blurRadius: 2,
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: spendingByCategory.entries.map((entry) {
+              final categoryName = entry.key.toString().split('.').last;
+              final formattedName = '${categoryName.substring(0, 1).toUpperCase()}${categoryName.substring(1)}';
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _getCategoryColor(entry.key),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    formattedName,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+        );
+      },
     );
   }
 
@@ -126,6 +506,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80), // Add padding to prevent FAB overlap
       itemCount: expenses.length,
       itemBuilder: (context, index) {
         final expense = expenses[index];

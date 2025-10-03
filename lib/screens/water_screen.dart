@@ -172,12 +172,18 @@ class _WaterScreenState extends State<WaterScreen> {
     final box = Hive.box<WaterIntake>('water_intake');
     final now = DateTime.now();
     final weekData = <FlSpot>[];
+    
+    // Find all water intake entries and organize by date
+    final intakesByDate = <String, double>{};
+    for (var intake in box.values) {
+      final key = DateTime(intake.date.year, intake.date.month, intake.date.day).toString();
+      intakesByDate[key] = intake.amount.toDouble();
+    }
 
     for (int i = 6; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final key = DateTime(date.year, date.month, date.day).toString();
-      final intake = box.get(key);
-      final amount = (intake?.amount ?? 0) / 1000; // Convert to liters
+      final amount = (intakesByDate[key] ?? 0) / 1000; // Convert to liters
       weekData.add(FlSpot((6 - i).toDouble(), amount));
     }
 

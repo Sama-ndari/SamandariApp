@@ -57,4 +57,32 @@ class Goal extends HiveObject {
   bool get isOverdue {
     return !isCompleted && DateTime.now().isAfter(deadline);
   }
+
+  // Check if goal type uses percentage (learning, fitness, personal)
+  bool get usesPercentage {
+    return type == GoalType.learning || 
+           type == GoalType.fitness || 
+           type == GoalType.personal;
+  }
+
+  // Get display unit (% for learning/fitness/personal, FBu for savings)
+  String get displayUnit {
+    return usesPercentage ? '%' : 'FBu';
+  }
+
+  // Get formatted current value
+  String get formattedCurrent {
+    if (usesPercentage) {
+      return '${currentAmount.toStringAsFixed(0)}%';
+    }
+    return currentAmount.toStringAsFixed(0);
+  }
+
+  // Get formatted target value  
+  String get formattedTarget {
+    if (usesPercentage) {
+      return '100%';
+    }
+    return targetAmount.toStringAsFixed(0);
+  }
 }

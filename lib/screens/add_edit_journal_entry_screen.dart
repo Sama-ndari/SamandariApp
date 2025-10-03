@@ -99,21 +99,59 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
                 },
                 onSaved: (value) => _content = value!,
               ),
+              const SizedBox(height: 24),
+              const Text(
+                'How are you feeling?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<Mood>(
-                value: _mood,
-                decoration: const InputDecoration(labelText: 'Mood'),
-                items: Mood.values.map((mood) {
-                  return DropdownMenuItem(
-                    value: mood,
-                    child: Text(mood.toString().split('.').last),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: Mood.values.map((mood) {
+                  final isSelected = _mood == mood;
+                  final moodName = mood.toString().split('.').last;
+                  final formattedMood = moodName[0].toUpperCase() + moodName.substring(1);
+                  final moodColor = _getMoodColor(mood);
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _mood = mood;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? moodColor.withOpacity(0.2) : Colors.grey[100],
+                        border: Border.all(
+                          color: isSelected ? moodColor : Colors.grey[300]!,
+                          width: isSelected ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getMoodIcon(mood),
+                            color: isSelected ? moodColor : Colors.grey[600],
+                            size: 20,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            formattedMood,
+                            style: TextStyle(
+                              color: isSelected ? moodColor : Colors.grey[800],
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _mood = value!;
-                  });
-                },
               ),
               const SizedBox(height: 20),
               ElevatedButton(
@@ -125,5 +163,99 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
         ),
       ),
     );
+  }
+
+  Color _getMoodColor(Mood mood) {
+    switch (mood) {
+      case Mood.happy:
+        return const Color(0xFF4CAF50);
+      case Mood.sad:
+        return const Color(0xFF2196F3);
+      case Mood.neutral:
+        return const Color(0xFF9E9E9E);
+      case Mood.excited:
+        return const Color(0xFFFF9800);
+      case Mood.calm:
+        return const Color(0xFF009688);
+      case Mood.anxious:
+        return const Color(0xFF9C27B0);
+      case Mood.grateful:
+        return const Color(0xFFE91E63);
+      case Mood.angry:
+        return const Color(0xFFF44336);
+      case Mood.loved:
+        return const Color(0xFFFF4081);
+      case Mood.peaceful:
+        return const Color(0xFF00BCD4);
+      case Mood.stressed:
+        return const Color(0xFFFF5722);
+      case Mood.energetic:
+        return const Color(0xFFFFEB3B);
+      case Mood.tired:
+        return const Color(0xFF607D8B);
+      case Mood.hopeful:
+        return const Color(0xFF8BC34A);
+      case Mood.lonely:
+        return const Color(0xFF3F51B5);
+      case Mood.confused:
+        return const Color(0xFF795548);
+      case Mood.proud:
+        return const Color(0xFFFFD700);
+      case Mood.disappointed:
+        return const Color(0xFF757575);
+      case Mood.content:
+        return const Color(0xFF66BB6A);
+      case Mood.inspired:
+        return const Color(0xFFAB47BC);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getMoodIcon(Mood mood) {
+    switch (mood) {
+      case Mood.happy:
+        return Icons.sentiment_very_satisfied;
+      case Mood.sad:
+        return Icons.sentiment_very_dissatisfied;
+      case Mood.neutral:
+        return Icons.sentiment_neutral;
+      case Mood.excited:
+        return Icons.celebration;
+      case Mood.calm:
+        return Icons.self_improvement;
+      case Mood.anxious:
+        return Icons.psychology_alt;
+      case Mood.grateful:
+        return Icons.volunteer_activism;
+      case Mood.angry:
+        return Icons.sentiment_dissatisfied;
+      case Mood.loved:
+        return Icons.favorite;
+      case Mood.peaceful:
+        return Icons.spa;
+      case Mood.stressed:
+        return Icons.flash_on;
+      case Mood.energetic:
+        return Icons.bolt;
+      case Mood.tired:
+        return Icons.bedtime;
+      case Mood.hopeful:
+        return Icons.wb_sunny;
+      case Mood.lonely:
+        return Icons.person_outline;
+      case Mood.confused:
+        return Icons.help_outline;
+      case Mood.proud:
+        return Icons.military_tech;
+      case Mood.disappointed:
+        return Icons.sentiment_dissatisfied_outlined;
+      case Mood.content:
+        return Icons.check_circle_outline;
+      case Mood.inspired:
+        return Icons.auto_awesome;
+      default:
+        return Icons.sentiment_neutral;
+    }
   }
 }

@@ -17,7 +17,33 @@ enum Mood {
   @HiveField(5)
   anxious,
   @HiveField(6)
-  grateful
+  grateful,
+  @HiveField(7)
+  angry,
+  @HiveField(8)
+  loved,
+  @HiveField(9)
+  peaceful,
+  @HiveField(10)
+  stressed,
+  @HiveField(11)
+  energetic,
+  @HiveField(12)
+  tired,
+  @HiveField(13)
+  hopeful,
+  @HiveField(14)
+  lonely,
+  @HiveField(15)
+  confused,
+  @HiveField(16)
+  proud,
+  @HiveField(17)
+  disappointed,
+  @HiveField(18)
+  content,
+  @HiveField(19)
+  inspired
 }
 
 @HiveType(typeId: 9)

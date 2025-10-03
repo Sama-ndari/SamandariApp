@@ -18,7 +18,7 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  TaskFilter _filter = TaskFilter();
+  TaskFilter _filter = TaskFilter()..showCompleted = false;
 
   Color _getPriorityColor(Priority priority) {
     switch (priority) {

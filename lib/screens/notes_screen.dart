@@ -52,6 +52,130 @@ class _NotesScreenState extends State<NotesScreen> {
 
   final NoteService _noteService = NoteService();
 
+  Widget _buildNoteCard(BuildContext context, Note note) {
+    final colors = [
+      Colors.amber,
+      Colors.lightBlue,
+      Colors.lightGreen,
+      Colors.pink,
+      Colors.deepPurple,
+      Colors.orange,
+    ];
+    final color = colors[note.title.length % colors.length];
+
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => AddEditNoteScreen(note: note),
+          ),
+        );
+      },
+      onLongPress: () => _showRenameDialog(note),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          border: Border(
+            left: BorderSide(color: color, width: 5),
+            bottom: BorderSide(
+              color: Colors.grey.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.note_outlined,
+                        color: color,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            note.title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            DateFormat('MMM d, y').format(note.createdAt),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (note.content.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    note.content,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[700],
+                      height: 1.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (note.tags.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: note.tags.map((tag) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: color.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          '#$tag',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,6 +308,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 ),
               Expanded(
                 child: ListView.builder(
+            padding: const EdgeInsets.all(12),
             itemCount: notes.length,
             itemBuilder: (context, index) {
               final note = notes[index];
@@ -197,23 +322,16 @@ class _NotesScreenState extends State<NotesScreen> {
                   );
                 },
                 background: Container(
-                  color: Colors.red,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                child: ListTile(
-                title: Text(note.title),
-                subtitle: Text('Created: ${DateFormat.yMd().format(note.createdAt)}'),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => AddEditNoteScreen(note: note),
-                    ),
-                  );
-                },
-                onLongPress: () => _showRenameDialog(note),
-              ),
+                child: _buildNoteCard(context, note),
               );
             },
           ),

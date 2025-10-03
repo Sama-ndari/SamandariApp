@@ -91,18 +91,58 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 4),
-                        LinearProgressIndicator(
-                          value: goal.progressPercentage / 100,
-                          backgroundColor: Colors.grey[300],
-                          valueColor: AlwaysStoppedAnimation<Color>(_getGoalColor(goal.type)),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    goal.usesPercentage 
+                                        ? '${goal.formattedCurrent} of ${goal.formattedTarget}'
+                                        : '${goal.formattedCurrent} ${goal.displayUnit} of ${goal.formattedTarget} ${goal.displayUnit}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  LinearProgressIndicator(
+                                    value: goal.progressPercentage / 100,
+                                    backgroundColor: Colors.grey[300],
+                                    valueColor: AlwaysStoppedAnimation<Color>(_getGoalColor(goal.type)),
+                                    minHeight: 6,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '${goal.progressPercentage.toStringAsFixed(0)}%',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: _getGoalColor(goal.type),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${goal.progressPercentage.toStringAsFixed(0)}% • Due: ${DateFormat.yMd().format(goal.deadline)}',
-                          style: TextStyle(
-                            color: goal.isOverdue ? Colors.red : null,
-                          ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Due: ${DateFormat('MMM d, y').format(goal.deadline)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: goal.isOverdue ? Colors.red : Colors.grey[600],
+                                fontWeight: goal.isOverdue ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

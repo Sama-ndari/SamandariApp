@@ -28,11 +28,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
           
           // Sort debts: unpaid first, then by due date (earliest first)
           debts.sort((a, b) {
-            // Unpaid debts come first
             if (a.isPaid != b.isPaid) {
               return a.isPaid ? 1 : -1;
             }
-            // Then sort by due date
             return a.dueDate.compareTo(b.dueDate);
           });
           
@@ -48,29 +46,12 @@ class _DebtsScreenState extends State<DebtsScreen> {
               },
             );
           }
+          
           return ListView.builder(
+            padding: const EdgeInsets.all(12),
             itemCount: debts.length,
             itemBuilder: (context, index) {
               final debt = debts[index];
-              final isPaid = debt.isPaid;
-              
-              // Choose icon based on paid status and type
-              IconData icon;
-              Color iconColor;
-              
-              if (isPaid) {
-                icon = Icons.check_circle;
-                iconColor = Colors.grey;
-              } else {
-                if (debt.type == DebtType.iOwe) {
-                  icon = Icons.arrow_upward;
-                  iconColor = Colors.red;
-                } else {
-                  icon = Icons.arrow_downward;
-                  iconColor = Colors.green;
-                }
-              }
-              
               return Dismissible(
                 key: Key(debt.id),
                 direction: DismissDirection.endToStart,
@@ -89,90 +70,17 @@ class _DebtsScreenState extends State<DebtsScreen> {
                   );
                 },
                 background: Container(
-                  color: Colors.red,
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                child: Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  color: isPaid ? Colors.grey[100] : null,
-                  child: ListTile(
-                  leading: Icon(icon, color: iconColor, size: 32),
-                  title: Row(
-                    children: [
-                      Text(
-                        debt.person,
-                        style: TextStyle(
-                          decoration: isPaid ? TextDecoration.lineThrough : null,
-                          color: isPaid ? Colors.grey : null,
-                        ),
-                      ),
-                      if (isPaid) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'PAID',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        debt.description,
-                        style: TextStyle(
-                          color: isPaid ? Colors.grey : null,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Due: ${DateFormat.yMMMd().format(debt.dueDate)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isPaid 
-                              ? Colors.grey 
-                              : (debt.dueDate.isBefore(DateTime.now()) 
-                                  ? Colors.red 
-                                  : Colors.grey[600]),
-                          fontWeight: debt.dueDate.isBefore(DateTime.now()) && !isPaid
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-                  trailing: Text(
-                    formatMoney(debt.amount),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      decoration: isPaid ? TextDecoration.lineThrough : null,
-                      color: isPaid ? Colors.grey : (debt.type == DebtType.iOwe ? Colors.red : Colors.green),
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => AddEditDebtScreen(debt: debt),
-                      ),
-                    );
-                  },
-                ), // End ListTile
-              ), // End Card
-            );
+                child: _buildDebtCard(context, debt),
+              );
             },
           );
         },
@@ -209,6 +117,146 @@ class _DebtsScreenState extends State<DebtsScreen> {
             child: const Icon(Icons.add),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDebtCard(BuildContext context, Debt debt) {
+    final isPaid = debt.isPaid;
+    final isOverdue = !isPaid && debt.dueDate.isBefore(DateTime.now());
+    final isIOwe = debt.type == DebtType.iOwe;
+    final cardColor = isIOwe ? Colors.red : Colors.green;
+    
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => AddEditDebtScreen(debt: debt),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          border: Border(
+            left: BorderSide(
+              color: isPaid ? Colors.grey : cardColor,
+              width: 5,
+            ),
+            bottom: BorderSide(
+              color: Colors.grey.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(
+                isPaid
+                    ? Icons.check_circle
+                    : (isIOwe ? Icons.arrow_upward : Icons.arrow_downward),
+                color: isPaid ? Colors.grey : cardColor,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            debt.person,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              decoration: isPaid ? TextDecoration.lineThrough : null,
+                              color: isPaid ? Colors.grey : null,
+                            ),
+                          ),
+                        ),
+                        if (isPaid)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'PAID',
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      debt.description,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isPaid ? Colors.grey : Colors.grey[700],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          'Due: ${DateFormat('MMM d, y').format(debt.dueDate)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isOverdue
+                                ? Colors.red
+                                : (isPaid ? Colors.grey : Colors.grey[600]),
+                            fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                        if (isOverdue) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'OVERDUE',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                formatMoney(debt.amount),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  decoration: isPaid ? TextDecoration.lineThrough : null,
+                  color: isPaid ? Colors.grey : cardColor,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
