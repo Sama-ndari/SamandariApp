@@ -24,13 +24,16 @@ class HabitService {
   }
 
   Future<void> toggleHabitCompletion(Habit habit) async {
-    final today = DateTime.now();
-    final todayWithoutTime = DateTime(today.year, today.month, today.day);
+    await toggleHabitCompletionForDate(habit, DateTime.now());
+  }
 
-    if (habit.completionDates.contains(todayWithoutTime)) {
-      habit.completionDates.remove(todayWithoutTime);
+  Future<void> toggleHabitCompletionForDate(Habit habit, DateTime date) async {
+    final dateWithoutTime = DateTime(date.year, date.month, date.day);
+
+    if (habit.completionDates.contains(dateWithoutTime)) {
+      habit.completionDates.remove(dateWithoutTime);
     } else {
-      habit.completionDates.add(todayWithoutTime);
+      habit.completionDates.add(dateWithoutTime);
     }
     await updateHabit(habit);
   }

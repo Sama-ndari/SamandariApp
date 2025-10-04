@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:samapp/models/habit.dart';
 import 'package:samapp/screens/add_edit_habit_screen.dart';
+import 'package:samapp/services/habit_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class HabitDetailsScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class HabitDetailsScreen extends StatefulWidget {
 }
 
 class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
+  final HabitService _habitService = HabitService();
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
@@ -106,13 +108,81 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
             Text('Completion History', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             TableCalendar(
-              firstDay: habit.createdAt ?? DateTime.now(),
-              lastDay: DateTime.now(),
+              firstDay: habit.createdAt.subtract(const Duration(days: 365)),
+              lastDay: DateTime.now().add(const Duration(days: 365)),
               focusedDay: DateTime.now(),
               calendarFormat: CalendarFormat.month,
               eventLoader: (day) {
-                return habit.completionDates.where((date) => isSameDay(date, day)).toList();
+                final dayWithoutTime = DateTime(day.year, day.month, day.day);
+                return habit.completionDates
+                    .where((date) => isSameDay(date, dayWithoutTime))
+                    .toList();
               },
+              onDaySelected: (selectedDay, focusedDay) {
+                final today = DateTime.now();
+                if (selectedDay.isAfter(today)) {
+                  // Prevent marking future dates
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("You can't complete a habit for a future date!"),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                  return;
+                }
+                _habitService.toggleHabitCompletionForDate(habit, selectedDay);
+              },
+              calendarBuilders: CalendarBuilders(
+                defaultBuilder: (context, day, focusedDay) {
+                  final today = DateTime.now();
+                  final todayWithoutTime = DateTime(today.year, today.month, today.day);
+                  final dayWithoutTime = DateTime(day.year, day.month, day.day);
+                  final isCompleted = habit.completionDates.any((date) => isSameDay(date, dayWithoutTime));
+
+                  if (!isCompleted && day.isBefore(todayWithoutTime)) {
+                    return Center(
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(color: Colors.grey.withOpacity(0.8)),
+                      ),
+                    );
+                  }
+                  return null;
+                },
+                markerBuilder: (context, day, events) {
+                  final today = DateTime.now();
+                  final todayWithoutTime = DateTime(today.year, today.month, today.day);
+                  final dayWithoutTime = DateTime(day.year, day.month, day.day);
+                  final isCompleted = events.isNotEmpty;
+
+                  if (isCompleted) {
+                    return Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Color(habit.color).withOpacity(0.8),
+                          shape: BoxShape.circle,
+                        ),
+                        width: 32,
+                        height: 32,
+                        child: Center(
+                          child: Text(
+                            '${day.day}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    );
+                  } else if (day.isBefore(todayWithoutTime)) {
+                    return Center(
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(color: Colors.grey.withOpacity(0.8)),
+                      ),
+                    );
+                  }
+                  return null;
+                },
+              ),
             ),
           ],
         ),
