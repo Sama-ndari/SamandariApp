@@ -32,7 +32,7 @@ class DebtService {
     double totalOwed = 0;
     double totalOwedToYou = 0;
 
-    for (var debt in _debtBox.values) {
+    for (var debt in _debtBox.values.where((d) => !d.isPaid)) {
       if (debt.type == DebtType.iOwe) {
         totalOwed += debt.amount;
       } else {

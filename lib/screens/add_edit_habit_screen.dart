@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:samapp/models/habit.dart';
 import 'package:samapp/services/habit_service.dart';
+import 'package:samapp/services/notification_service.dart';
 
 class AddEditHabitScreen extends StatefulWidget {
   final Habit? habit;
@@ -20,6 +21,11 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
   late HabitFrequency _frequency;
   late int _color;
   late String _notes;
+  late bool _reminderEnabled;
+  late TimeOfDay _reminderTime;
+  late HabitType _type;
+  late double? _goalValue;
+  late String? _goalUnit;
 
   @override
   void initState() {
@@ -29,28 +35,76 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
     _frequency = widget.habit?.frequency ?? HabitFrequency.daily;
     _color = widget.habit?.color ?? Colors.blue.value;
     _notes = widget.habit?.notes ?? '';
+    _reminderEnabled = widget.habit?.reminderEnabled ?? false;
+    if (widget.habit?.reminderTime != null && widget.habit!.reminderTime!.isNotEmpty) {
+      final timeParts = widget.habit!.reminderTime!.split(':');
+      _reminderTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
+    } else {
+      _reminderTime = const TimeOfDay(hour: 9, minute: 0);
+    }
+    _type = widget.habit?.type ?? HabitType.yesNo;
+    _goalValue = widget.habit?.goalValue;
+    _goalUnit = widget.habit?.goalUnit;
   }
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState!.save();
-      final newHabit = Habit()
-        ..id = widget.habit?.id ?? ''
-        ..name = _name
-        ..description = _description
-        ..frequency = _frequency
-        ..color = _color
-        ..completionDates = widget.habit?.completionDates ?? []
-        ..createdAt = widget.habit?.createdAt ?? DateTime.now()
-        ..notes = _notes;
 
-      if (widget.habit == null) {
-        _habitService.addHabit(newHabit);
+      final isUpdating = widget.habit != null;
+
+      if (isUpdating) {
+        // Update existing habit
+        final habit = widget.habit!;
+        habit
+          ..isArchived = habit.isArchived // Explicitly carry over the value
+          ..name = _name
+          ..description = _description
+          ..frequency = _frequency
+          ..color = _color
+          ..notes = _notes
+          ..type = _type
+          ..goalValue = _type != HabitType.yesNo ? _goalValue : null
+          ..goalUnit = _type != HabitType.yesNo ? _goalUnit : null
+          ..reminderEnabled = _reminderEnabled
+          ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
+        _habitService.updateHabit(habit);
       } else {
-        _habitService.updateHabit(newHabit);
+        // Create new habit and initialize all fields
+        final newHabit = Habit()
+          ..id = '' // Service will assign it
+          ..name = _name
+          ..description = _description
+          ..frequency = _frequency
+          ..color = _color
+          ..completionDates = []
+          ..createdAt = DateTime.now()
+          ..notes = _notes
+          ..isArchived = false
+          ..reminderEnabled = _reminderEnabled
+          ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}'
+          ..type = _type
+          ..goalValue = _type != HabitType.yesNo ? _goalValue : null
+          ..goalUnit = _type != HabitType.yesNo ? _goalUnit : null;
+        _habitService.addHabit(newHabit);
       }
 
-      Navigator.of(context).pop();
+      // Handle notification scheduling
+      final notificationService = NotificationService();
+      if (_reminderEnabled) {
+        final habitToSchedule = isUpdating ? widget.habit! : _habitService.getHabitByName(_name);
+        if (habitToSchedule != null) {
+          final now = DateTime.now();
+          final reminderDateTime = DateTime(now.year, now.month, now.day, _reminderTime.hour, _reminderTime.minute);
+          notificationService.scheduleHabitReminder(habitToSchedule, reminderDateTime);
+        }
+      } else if (isUpdating) {
+        notificationService.cancelNotification(widget.habit!.id.hashCode);
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -80,8 +134,60 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
               TextFormField(
                 initialValue: _description,
                 decoration: const InputDecoration(labelText: 'Description'),
-                onSaved: (value) => _description = value!,
+                onSaved: (value) => _description = value ?? '',
               ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<HabitType>(
+                value: _type,
+                decoration: const InputDecoration(labelText: 'Habit Type'),
+                items: HabitType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type.toString().split('.').last),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _type = value!;
+                  });
+                },
+              ),
+              if (_type == HabitType.measurable || _type == HabitType.timed)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: _goalValue?.toString(),
+                        decoration: const InputDecoration(labelText: 'Goal'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a goal';
+                          }
+                          if (double.tryParse(value) == null) {
+                            return 'Please enter a valid number';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) => _goalValue = double.parse(value!),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: _goalUnit,
+                        decoration: const InputDecoration(labelText: 'Unit (e.g., km, min)'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a unit';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) => _goalUnit = value!,
+                      ),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 16),
               TextFormField(
                 initialValue: _notes,
@@ -108,6 +214,34 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
                   });
                 },
               ),
+              const SizedBox(height: 20),
+              const Divider(),
+              SwitchListTile(
+                title: const Text('Enable Reminder'),
+                value: _reminderEnabled,
+                onChanged: (bool value) {
+                  setState(() {
+                    _reminderEnabled = value;
+                  });
+                },
+              ),
+              if (_reminderEnabled)
+                ListTile(
+                  title: const Text('Reminder Time'),
+                  subtitle: Text(_reminderTime.format(context)),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () async {
+                    final TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: _reminderTime,
+                    );
+                    if (picked != null && picked != _reminderTime) {
+                      setState(() {
+                        _reminderTime = picked;
+                      });
+                    }
+                  },
+                ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _submit,

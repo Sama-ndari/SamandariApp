@@ -10,6 +10,14 @@ class HabitService {
     return _habitBox.values.toList();
   }
 
+  Habit? getHabitByName(String name) {
+    try {
+      return _habitBox.values.firstWhere((h) => h.name == name);
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> addHabit(Habit habit) async {
     habit.id = _uuid.v4();
     await _habitBox.put(habit.id, habit);
@@ -23,17 +31,19 @@ class HabitService {
     await _habitBox.delete(habitId);
   }
 
-  Future<void> toggleHabitCompletion(Habit habit) async {
-    await toggleHabitCompletionForDate(habit, DateTime.now());
+  Future<void> toggleArchiveStatus(Habit habit) async {
+    habit.isArchived = !habit.isArchived;
+    await updateHabit(habit);
   }
 
-  Future<void> toggleHabitCompletionForDate(Habit habit, DateTime date) async {
-    final dateWithoutTime = DateTime(date.year, date.month, date.day);
+  Future<void> toggleHabitCompletion(Habit habit) async {
+    final today = DateTime.now();
+    final todayWithoutTime = DateTime(today.year, today.month, today.day);
 
-    if (habit.completionDates.contains(dateWithoutTime)) {
-      habit.completionDates.remove(dateWithoutTime);
+    if (habit.completionDates.contains(todayWithoutTime)) {
+      habit.completionDates.remove(todayWithoutTime);
     } else {
-      habit.completionDates.add(dateWithoutTime);
+      habit.completionDates.add(todayWithoutTime);
     }
     await updateHabit(habit);
   }

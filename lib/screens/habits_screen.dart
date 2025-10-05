@@ -14,17 +14,44 @@ class HabitsScreen extends StatefulWidget {
   State<HabitsScreen> createState() => _HabitsScreenState();
 }
 
-class _HabitsScreenState extends State<HabitsScreen> {
+enum HabitFilter { active, archived }
+
+class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderStateMixin {
   final HabitService _habitService = HabitService();
+  HabitFilter _currentFilter = HabitFilter.active;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: SegmentedButton<HabitFilter>(
+          segments: const [
+            ButtonSegment(value: HabitFilter.active, label: Text('Active')),
+            ButtonSegment(value: HabitFilter.archived, label: Text('Archived')),
+          ],
+          selected: {_currentFilter},
+          onSelectionChanged: (Set<HabitFilter> newSelection) {
+            setState(() {
+              _currentFilter = newSelection.first;
+            });
+          },
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: ValueListenableBuilder(
         valueListenable: Hive.box<Habit>('habits').listenable(),
         builder: (context, Box<Habit> box, _) {
-          final habits = box.values.toList().cast<Habit>();
-          
+          List<Habit> habits = box.values.toList().cast<Habit>();
+
+          // Filter habits
+          if (_currentFilter == HabitFilter.active) {
+            habits = habits.where((h) => !h.isArchived).toList();
+          } else {
+            habits = habits.where((h) => h.isArchived).toList();
+          }
+
           if (habits.isEmpty) {
             return EmptyStates.noHabits(
               context,
@@ -89,6 +116,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
         date.month == DateTime.now().month &&
         date.day == DateTime.now().day);
     final habitColor = Color(habit.color);
+
+    // For measurable/timed habits, we need to check if a value has been logged for today.
+    // This is a placeholder. A more robust solution would store daily values.
+    final isMeasurableCompleted = habit.type != HabitType.yesNo && isCompletedToday;
 
     return InkWell(
       onTap: () {
@@ -169,18 +200,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             : Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: IconButton(
-                        icon: Icon(
-                          isCompletedToday
-                              ? Icons.check_circle
-                              : Icons.check_circle_outline,
-                          color: isCompletedToday ? Colors.green : Colors.grey,
-                          size: 32,
-                        ),
-                        onPressed: () {
-                          _habitService.toggleHabitCompletion(habit);
-                        },
-                      ),
+                      child: habit.type == HabitType.yesNo
+                          ? _buildYesNoButton(habit, isCompletedToday)
+                          : _buildMeasurableButton(context, habit, isMeasurableCompleted),
                     ),
                   ],
                 ),
@@ -216,10 +238,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
       return now.subtract(Duration(days: 6 - i));
     });
 
-    return Flexible(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: last7Days.map((date) {
+    return Row(
+      children: last7Days.map((date) {
         final dateOnly = DateTime(date.year, date.month, date.day);
         final isCompleted = habit.completionDates.any((completedDate) =>
             completedDate.year == dateOnly.year &&
@@ -248,7 +268,67 @@ class _HabitsScreenState extends State<HabitsScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildYesNoButton(Habit habit, bool isCompleted) {
+    return IconButton(
+      icon: Icon(
+        isCompleted ? Icons.check_circle : Icons.check_circle_outline,
+        color: isCompleted ? Colors.green : Colors.grey,
+        size: 32,
       ),
+      onPressed: () {
+        _habitService.toggleHabitCompletion(habit);
+      },
+    );
+  }
+
+  Widget _buildMeasurableButton(BuildContext context, Habit habit, bool isCompleted) {
+    return IconButton(
+      icon: Icon(
+        isCompleted ? Icons.check_box : Icons.add_box_outlined,
+        color: isCompleted ? Colors.green : Colors.grey,
+        size: 32,
+      ),
+      onPressed: () {
+        // For simplicity, we'll just toggle completion. A real implementation
+        // would show a dialog to enter the value.
+        _showEnterValueDialog(context, habit);
+      },
+    );
+  }
+
+  void _showEnterValueDialog(BuildContext context, Habit habit) {
+    final TextEditingController controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Log ${habit.name}'),
+          content: TextFormField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: 'Value (${habit.goalUnit})'),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Log'),
+              onPressed: () {
+                // Here you would save the value. For now, we just mark as complete.
+                if (!habit.completionDates.any((d) => d.isAtSameMomentAs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)))) {
+                   _habitService.toggleHabitCompletion(habit);
+                }
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

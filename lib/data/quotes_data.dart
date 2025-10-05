@@ -1,0 +1,110 @@
+import 'package:samapp/models/quote.dart';
+
+// Sample inspirational quotes
+const List<Quote> inspirationalQuotes = [
+  Quote(text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt"),
+  Quote(text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney"),
+  Quote(text: "Don't judge each day by the harvest you reap but by the seeds that you plant.", author: "Robert Louis Stevenson"),
+  Quote(text: "The only limit to our realization of tomorrow will be our doubts of today.", author: "Franklin D. Roosevelt"),
+  Quote(text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt"),
+  Quote(text: "You are never too old to set another goal or to dream a new dream.", author: "C.S. Lewis"),
+  Quote(text: "It is never too late to be what you might have been.", author: "George Eliot"),
+  Quote(text: "What you get by achieving your goals is not as important as what you become by achieving your goals.", author: "Zig Ziglar"),
+  Quote(text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", author: "Winston Churchill"),
+  Quote(text: "The best way out is always through.", author: "Robert Frost"),
+  Quote(text: "Turn your wounds into wisdom.", author: "Oprah Winfrey"),
+  Quote(text: "For every minute you are angry, you lose sixty seconds of happiness.", author: "Ralph Waldo Emerson"),
+  Quote(text: "You must be the change you wish to see in the world.", author: "Mahatma Gandhi"),
+  Quote(text: "The secret of getting ahead is getting started.", author: "Mark Twain"),
+  Quote(text: "Hustle beats talent when talent doesn’t hustle.", author: "Ross Simmonds"),
+  Quote(text: "Doubt kills more dreams than failure ever will.", author: "Suzy Kassem"),
+  Quote(text: "Don’t watch the clock; do what it does. Keep going.", author: "Sam Levenson"),
+  Quote(text: "Dream big. Start small. Act now.", author: "Robin Sharma"),
+  Quote(text: "If you want to lift yourself up, lift up someone else.", author: "Booker T. Washington"),
+  Quote(text: "Fall seven times, stand up eight.", author: "Japanese Proverb"),
+  Quote(text: "The harder the battle, the sweeter the victory.", author: "Les Brown"),
+  Quote(text: "Everything you’ve ever wanted is on the other side of fear.", author: "George Addair"),
+  Quote(text: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn"),
+  Quote(text: "Don’t limit your challenges—challenge your limits.", author: "Jerry Dunn"),
+  Quote(text: "A year from now you may wish you had started today.", author: "Karen Lamb"),
+  Quote(text: "It always seems impossible until it’s done.", author: "Nelson Mandela"),
+  Quote(text: "Keep your face always toward the sunshine—and shadows will fall behind you.", author: "Walt Whitman"),
+  Quote(text: "If opportunity doesn’t knock, build a door.", author: "Milton Berle"),
+  Quote(text: "Success is walking from failure to failure with no loss of enthusiasm.", author: "Winston Churchill"),
+  Quote(text: "Work hard in silence, let success make the noise.", author: "Frank Ocean"),
+  Quote(text: "Courage doesn’t always roar. Sometimes courage is the quiet voice at the end of the day saying, ‘I will try again tomorrow.’", author: "Mary Anne Radmacher"),
+];
+
+
+
+// Sample scriptures or spiritual quotes
+const List<Quote> scriptures = [
+  Quote(text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.", author: "Jeremiah 29:11"),
+  Quote(text: "Trust in the Lord with all your heart and lean not on your own understanding.", author: "Proverbs 3:5"),
+  Quote(text: "I can do all things through Christ who strengthens me.", author: "Philippians 4:13"),
+  Quote(text: "Be still, and know that I am God.", author: "Psalm 46:10"),
+  Quote(text: "The Lord is my shepherd, I lack nothing.", author: "Psalm 23:1"),
+  Quote(text: "He gives strength to the weary and increases the power of the weak.", author: "Isaiah 40:29"),
+  Quote(text: "So do not fear, for I am with you; do not be dismayed, for I am your God.", author: "Isaiah 41:10"),
+  Quote(text: "The Lord is my light and my salvation—whom shall I fear?", author: "Psalm 27:1"),
+  Quote(text: "Cast all your anxiety on him because he cares for you.", author: "1 Peter 5:7"),
+  Quote(text: "The righteous person may have many troubles, but the Lord delivers him from them all.", author: "Psalm 34:19"),
+  Quote(text: "Commit to the Lord whatever you do, and he will establish your plans.", author: "Proverbs 16:3"),
+  Quote(text: "With God all things are possible.", author: "Matthew 19:26"),
+  Quote(text: "The Lord will fight for you; you need only to be still.", author: "Exodus 14:14"),
+  Quote(text: "The peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus.", author: "Philippians 4:7"),
+  Quote(text: "Let your light shine before others, that they may see your good deeds and glorify your Father in heaven.", author: "Matthew 5:16"),
+  Quote(text: "God is our refuge and strength, an ever-present help in trouble.", author: "Psalm 46:1"),
+  Quote(text: "My grace is sufficient for you, for my power is made perfect in weakness.", author: "2 Corinthians 12:9"),
+  Quote(text: "The Lord is good to those whose hope is in him, to the one who seeks him.", author: "Lamentations 3:25"),
+  Quote(text: "When I am afraid, I put my trust in you.", author: "Psalm 56:3"),
+  Quote(text: "The name of the Lord is a strong tower; the righteous run to it and are safe.", author: "Proverbs 18:10"),
+  Quote(text: "We walk by faith, not by sight.", author: "2 Corinthians 5:7"),
+  Quote(text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", author: "Joshua 1:9"),
+  Quote(text: "Do not worry about tomorrow, for tomorrow will worry about itself.", author: "Matthew 6:34"),
+  Quote(text: "The light shines in the darkness, and the darkness has not overcome it.", author: "John 1:5"),
+];
+
+
+//sample stoic quotes
+const List<Quote> stoicQuotes = [
+  Quote(text: "You have power over your mind—not outside events. Realize this, and you will find strength.", author: "Marcus Aurelius"),
+  Quote(text: "He who fears death will never do anything worthy of a living man.", author: "Seneca"),
+  Quote(text: "We suffer more often in imagination than in reality.", author: "Seneca"),
+  Quote(text: "Man conquers the world by conquering himself.", author: "Zeno of Citium"),
+  Quote(text: "It is not what happens to you, but how you react to it that matters.", author: "Epictetus"),
+  Quote(text: "If it is not right, do not do it; if it is not true, do not say it.", author: "Marcus Aurelius"),
+  Quote(text: "The happiness of your life depends upon the quality of your thoughts.", author: "Marcus Aurelius"),
+  Quote(text: "No man is free who is not master of himself.", author: "Epictetus"),
+  Quote(text: "Waste no more time arguing what a good man should be. Be one.", author: "Marcus Aurelius"),
+  Quote(text: "Luck is what happens when preparation meets opportunity.", author: "Seneca"),
+  Quote(text: "Difficulties strengthen the mind, as labor does the body.", author: "Seneca"),
+  Quote(text: "The more we value things outside our control, the less control we have.", author: "Epictetus"),
+  Quote(text: "The obstacle is the way.", author: "Marcus Aurelius"),
+  Quote(text: "Don’t explain your philosophy. Embody it.", author: "Epictetus"),
+  Quote(text: "He who has a why to live can bear almost any how.", author: "Friedrich Nietzsche"),
+];
+
+//sample tech quotes
+const List<Quote> techQuotes = [
+  Quote(text: "The only limit to our realization of tomorrow is our doubts of today.", author: " Franklin D. Roosevelt"),
+  Quote(text: "Stay hungry, stay foolish.", author: "Steve Jobs"),
+  Quote(text: "The people who are crazy enough to think they can change the world are the ones who do.", author: "Steve Jobs"),
+  Quote(text: "Move fast and break things. Unless you are breaking stuff, you are not moving fast enough.", author: "Mark Zuckerberg"),
+  Quote(text: "Your time is limited, so don’t waste it living someone else’s life.", author: "Steve Jobs"),
+  Quote(text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs"),
+  Quote(text: "Don’t worry about failure; you only have to be right once.", author: "Drew Houston, Dropbox"),
+  Quote(text: "If something is important enough, even if the odds are against you, you should still do it.", author: "Elon Musk"),
+  Quote(text: "Success is a lousy teacher. It seduces smart people into thinking they can’t lose.", author: "Bill Gates"),
+  Quote(text: "Make every detail perfect and limit the number of details to perfect.", author: "Jack Dorsey"),
+  Quote(text: "It’s not about ideas. It’s about making ideas happen.", author: "Scott Belsky, Behance"),
+  Quote(text: "The biggest risk is not taking any risk.", author: "Mark Zuckerberg"),
+  Quote(text: "Done is better than perfect.", author: "Sheryl Sandberg"),
+  Quote(text: "If you double the number of experiments you do per year, you’re going to double your inventiveness.", author: "Jeff Bezos"),
+  Quote(text: "Don’t be afraid to give up the good to go for the great.", author: "John D. Rockefeller"),
+  Quote(text: "Great things in business are never done by one person. They’re done by a team of people.", author: "Steve Jobs"),
+  Quote(text: "When something is important enough, you do it even if the odds are not in your favor.", author: "Elon Musk"),
+  Quote(text: "Dream big. Start small. Scale fast.", author: "Mike Maples Jr."),
+  Quote(text: "The best way to predict the future is to invent it.", author: "Alan Kay"),
+];
+

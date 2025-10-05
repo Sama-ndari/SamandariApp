@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import 'package:samapp/utils/money_formatter.dart';
 import 'package:samapp/main.dart';
 import 'dart:math';
+import 'package:samapp/widgets/daily_inspiration_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -98,6 +99,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 24),
             
+            // Daily Inspiration
+            const DailyInspirationWidget(),
+            const SizedBox(height: 24),
+
             // Quick Actions with animations
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,

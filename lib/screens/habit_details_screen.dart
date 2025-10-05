@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:samapp/models/habit.dart';
 import 'package:samapp/screens/add_edit_habit_screen.dart';
+import 'package:samapp/screens/habit_statistics_screen.dart';
 import 'package:samapp/services/habit_service.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -49,11 +50,32 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
                 },
                 tooltip: 'Edit Habit',
               ),
+              IconButton(
+                icon: Icon(habit.isArchived ? Icons.unarchive : Icons.archive),
+                onPressed: () {
+                  _habitService.toggleArchiveStatus(habit);
+                  // Optionally pop after archiving
+                  // Navigator.of(context).pop();
+                },
+                tooltip: habit.isArchived ? 'Unarchive Habit' : 'Archive Habit',
+              ),
+              IconButton(
+                icon: const Icon(Icons.show_chart),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => HabitStatisticsScreen(habit: habit),
+                    ),
+                  );
+                },
+                tooltip: 'View Statistics',
+              ),
             ],
           ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Description: ${habit.description ?? "No description"}', style: Theme.of(context).textTheme.titleMedium),
@@ -120,35 +142,21 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
               },
               onDaySelected: (selectedDay, focusedDay) {
                 final today = DateTime.now();
-                if (selectedDay.isAfter(today)) {
-                  // Prevent marking future dates
+                final todayWithoutTime = DateTime(today.year, today.month, today.day);
+                final selectedDayWithoutTime = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+
+                if (isSameDay(selectedDayWithoutTime, todayWithoutTime)) {
+                  _habitService.toggleHabitCompletion(habit);
+                } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("You can't complete a habit for a future date!"),
+                      content: Text("You can only complete a habit for the current day."),
                       backgroundColor: Colors.orange,
                     ),
                   );
-                  return;
                 }
-                _habitService.toggleHabitCompletionForDate(habit, selectedDay);
               },
               calendarBuilders: CalendarBuilders(
-                defaultBuilder: (context, day, focusedDay) {
-                  final today = DateTime.now();
-                  final todayWithoutTime = DateTime(today.year, today.month, today.day);
-                  final dayWithoutTime = DateTime(day.year, day.month, day.day);
-                  final isCompleted = habit.completionDates.any((date) => isSameDay(date, dayWithoutTime));
-
-                  if (!isCompleted && day.isBefore(todayWithoutTime)) {
-                    return Center(
-                      child: Text(
-                        '${day.day}',
-                        style: TextStyle(color: Colors.grey.withOpacity(0.8)),
-                      ),
-                    );
-                  }
-                  return null;
-                },
                 markerBuilder: (context, day, events) {
                   final today = DateTime.now();
                   final todayWithoutTime = DateTime(today.year, today.month, today.day);
@@ -174,9 +182,15 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
                     );
                   } else if (day.isBefore(todayWithoutTime)) {
                     return Center(
-                      child: Text(
-                        '${day.day}',
-                        style: TextStyle(color: Colors.grey.withOpacity(0.8)),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Text(
+                            '${day.day}',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          const Icon(Icons.close, color: Colors.red, size: 32),
+                        ],
                       ),
                     );
                   }
@@ -185,6 +199,7 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
         );

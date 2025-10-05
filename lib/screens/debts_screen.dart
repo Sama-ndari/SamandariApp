@@ -15,8 +15,11 @@ class DebtsScreen extends StatefulWidget {
   State<DebtsScreen> createState() => _DebtsScreenState();
 }
 
+enum DebtFilter { all, unpaid, paid }
+
 class _DebtsScreenState extends State<DebtsScreen> {
   final DebtService _debtService = DebtService();
+  DebtFilter _currentFilter = DebtFilter.unpaid;
 
   @override
   Widget build(BuildContext context) {
@@ -24,8 +27,15 @@ class _DebtsScreenState extends State<DebtsScreen> {
       body: ValueListenableBuilder(
         valueListenable: Hive.box<Debt>('debts').listenable(),
         builder: (context, Box<Debt> box, _) {
-          final debts = box.values.toList().cast<Debt>();
-          
+          List<Debt> debts = box.values.toList().cast<Debt>();
+
+          // Filter debts
+          if (_currentFilter == DebtFilter.paid) {
+            debts = debts.where((d) => d.isPaid).toList();
+          } else if (_currentFilter == DebtFilter.unpaid) {
+            debts = debts.where((d) => !d.isPaid).toList();
+          }
+
           // Sort debts: unpaid first, then by due date (earliest first)
           debts.sort((a, b) {
             if (a.isPaid != b.isPaid) {
@@ -33,7 +43,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
             }
             return a.dueDate.compareTo(b.dueDate);
           });
-          
+
           if (debts.isEmpty) {
             return EmptyStates.noDebts(
               context,
@@ -47,7 +57,29 @@ class _DebtsScreenState extends State<DebtsScreen> {
             );
           }
           
-          return ListView.builder(
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                child: SegmentedButton<DebtFilter>(
+                  segments: const [
+                    ButtonSegment(value: DebtFilter.all, label: Text('All')),
+                    ButtonSegment(value: DebtFilter.unpaid, label: Text('Unpaid')),
+                    ButtonSegment(value: DebtFilter.paid, label: Text('Paid')),
+                  ],
+                  selected: {_currentFilter},
+                  onSelectionChanged: (Set<DebtFilter> newSelection) {
+                    setState(() {
+                      _currentFilter = newSelection.first;
+                    });
+                  },
+                  style: SegmentedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
             padding: const EdgeInsets.all(12),
             itemCount: debts.length,
             itemBuilder: (context, index) {
@@ -82,6 +114,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
                 child: _buildDebtCard(context, debt),
               );
             },
+          ),
+              ),
+            ],
           );
         },
       ),

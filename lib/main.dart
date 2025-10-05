@@ -24,7 +24,9 @@ import 'package:samapp/services/theme_service.dart';
 import 'package:samapp/services/recurring_task_service.dart';
 import 'package:samapp/services/auto_backup_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:samapp/models/habit.dart';
 import 'package:provider/provider.dart';
+import 'package:hive/hive.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,7 +47,7 @@ void main() async {
   // Initialize notifications
   final notificationService = NotificationService();
   await notificationService.initialize();
-  
+
   runApp(MyApp(themeService: themeService));
 }
 
