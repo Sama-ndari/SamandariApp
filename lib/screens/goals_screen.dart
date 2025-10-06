@@ -100,8 +100,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                 children: [
                                   Text(
                                     goal.usesPercentage 
-                                        ? '${goal.formattedCurrent} of ${goal.formattedTarget}'
-                                        : '${goal.formattedCurrent} ${goal.displayUnit} of ${goal.formattedTarget} ${goal.displayUnit}',
+                                        ? '${goal.progressPercentage.toStringAsFixed(0)} of ${goal.formattedTarget}'
+                                        : '${goal.progressPercentage.toStringAsFixed(0)} ${goal.displayUnit} of ${goal.formattedTarget} ${goal.displayUnit}',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,

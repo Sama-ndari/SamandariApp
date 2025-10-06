@@ -51,15 +51,6 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
                 tooltip: 'Edit Habit',
               ),
               IconButton(
-                icon: Icon(habit.isArchived ? Icons.unarchive : Icons.archive),
-                onPressed: () {
-                  _habitService.toggleArchiveStatus(habit);
-                  // Optionally pop after archiving
-                  // Navigator.of(context).pop();
-                },
-                tooltip: habit.isArchived ? 'Unarchive Habit' : 'Archive Habit',
-              ),
-              IconButton(
                 icon: const Icon(Icons.show_chart),
                 onPressed: () {
                   Navigator.of(context).push(

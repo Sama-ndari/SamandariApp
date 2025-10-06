@@ -31,10 +31,6 @@ class HabitService {
     await _habitBox.delete(habitId);
   }
 
-  Future<void> toggleArchiveStatus(Habit habit) async {
-    habit.isArchived = !habit.isArchived;
-    await updateHabit(habit);
-  }
 
   Future<void> toggleHabitCompletion(Habit habit) async {
     final today = DateTime.now();

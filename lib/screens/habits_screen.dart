@@ -14,28 +14,15 @@ class HabitsScreen extends StatefulWidget {
   State<HabitsScreen> createState() => _HabitsScreenState();
 }
 
-enum HabitFilter { active, archived }
 
 class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderStateMixin {
   final HabitService _habitService = HabitService();
-  HabitFilter _currentFilter = HabitFilter.active;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: SegmentedButton<HabitFilter>(
-          segments: const [
-            ButtonSegment(value: HabitFilter.active, label: Text('Active')),
-            ButtonSegment(value: HabitFilter.archived, label: Text('Archived')),
-          ],
-          selected: {_currentFilter},
-          onSelectionChanged: (Set<HabitFilter> newSelection) {
-            setState(() {
-              _currentFilter = newSelection.first;
-            });
-          },
-        ),
+        title: const Text('Habits'),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -45,12 +32,6 @@ class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderSt
         builder: (context, Box<Habit> box, _) {
           List<Habit> habits = box.values.toList().cast<Habit>();
 
-          // Filter habits
-          if (_currentFilter == HabitFilter.active) {
-            habits = habits.where((h) => !h.isArchived).toList();
-          } else {
-            habits = habits.where((h) => h.isArchived).toList();
-          }
 
           if (habits.isEmpty) {
             return EmptyStates.noHabits(

@@ -57,7 +57,6 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
         // Update existing habit
         final habit = widget.habit!;
         habit
-          ..isArchived = habit.isArchived // Explicitly carry over the value
           ..name = _name
           ..description = _description
           ..frequency = _frequency
@@ -80,7 +79,6 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
           ..completionDates = []
           ..createdAt = DateTime.now()
           ..notes = _notes
-          ..isArchived = false
           ..reminderEnabled = _reminderEnabled
           ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}'
           ..type = _type

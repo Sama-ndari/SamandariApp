@@ -46,8 +46,6 @@ class Habit extends HiveObject {
   @HiveField(7)
   late String notes;
 
-  @HiveField(8)
-  late bool isArchived;
 
   @HiveField(9)
   late bool reminderEnabled;
