@@ -98,9 +98,6 @@ class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderSt
         date.day == DateTime.now().day);
     final habitColor = Color(habit.color);
 
-    // For measurable/timed habits, we need to check if a value has been logged for today.
-    // This is a placeholder. A more robust solution would store daily values.
-    final isMeasurableCompleted = habit.type != HabitType.yesNo && isCompletedToday;
 
     return InkWell(
       onTap: () {
@@ -181,9 +178,7 @@ class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderSt
                             : Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: habit.type == HabitType.yesNo
-                          ? _buildYesNoButton(habit, isCompletedToday)
-                          : _buildMeasurableButton(context, habit, isMeasurableCompleted),
+                      child: _buildYesNoButton(habit, isCompletedToday),
                     ),
                   ],
                 ),
@@ -265,51 +260,4 @@ class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildMeasurableButton(BuildContext context, Habit habit, bool isCompleted) {
-    return IconButton(
-      icon: Icon(
-        isCompleted ? Icons.check_box : Icons.add_box_outlined,
-        color: isCompleted ? Colors.green : Colors.grey,
-        size: 32,
-      ),
-      onPressed: () {
-        // For simplicity, we'll just toggle completion. A real implementation
-        // would show a dialog to enter the value.
-        _showEnterValueDialog(context, habit);
-      },
-    );
-  }
-
-  void _showEnterValueDialog(BuildContext context, Habit habit) {
-    final TextEditingController controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Log ${habit.name}'),
-          content: TextFormField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Value (${habit.goalUnit})'),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text('Log'),
-              onPressed: () {
-                // Here you would save the value. For now, we just mark as complete.
-                if (!habit.completionDates.any((d) => d.isAtSameMomentAs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)))) {
-                   _habitService.toggleHabitCompletion(habit);
-                }
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

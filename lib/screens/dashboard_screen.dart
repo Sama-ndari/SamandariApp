@@ -9,6 +9,7 @@ import 'package:samapp/screens/add_edit_task_screen.dart';
 import 'package:samapp/screens/add_edit_expense_screen.dart';
 import 'package:samapp/screens/add_edit_note_screen.dart';
 import 'package:samapp/screens/pomodoro_screen.dart';
+import 'package:samapp/screens/ai_hub_screen.dart';
 import 'package:samapp/widgets/suggestions_widget.dart';
 import 'package:samapp/widgets/animated_transitions.dart';
 import 'package:intl/intl.dart';
@@ -104,74 +105,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 24),
 
             // Quick Actions with animations
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ScaleIn(
-                  delay: const Duration(milliseconds: 100),
-                  child: _buildQuickAction(
-                    context,
-                    icon: Icons.add_task,
-                    label: 'Task',
-                    color: Colors.blue,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AddEditTaskScreen(),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final buttonWidth = (constraints.maxWidth - 24) / 4; // 24 = 8.0 * 3 (total horizontal padding)
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildQuickActionItem(
+                        context,
+                        width: buttonWidth,
+                        icon: Icons.add_task,
+                        label: 'Task',
+                        color: Colors.blue,
+                        delay: 100,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AddEditTaskScreen()),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                ScaleIn(
-                  delay: const Duration(milliseconds: 200),
-                  child: _buildQuickAction(
-                    context,
-                    icon: Icons.attach_money,
-                    label: 'Expense',
-                    color: Colors.green,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AddEditExpenseScreen(),
+                      ),
+                      _buildQuickActionItem(
+                        context,
+                        width: buttonWidth,
+                        icon: Icons.attach_money,
+                        label: 'Expense',
+                        color: Colors.green,
+                        delay: 200,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AddEditExpenseScreen()),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                ScaleIn(
-                  delay: const Duration(milliseconds: 300),
-                  child: _buildQuickAction(
-                    context,
-                    icon: Icons.note_add,
-                    label: 'Note',
-                    color: Colors.orange,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AddEditNoteScreen(),
+                      ),
+                      _buildQuickActionItem(
+                        context,
+                        width: buttonWidth,
+                        icon: Icons.auto_awesome,
+                        label: 'AI Hub',
+                        color: Colors.purple,
+                        delay: 500,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AiHubScreen()),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                ScaleIn(
-                  delay: const Duration(milliseconds: 400),
-                  child: _buildQuickAction(
-                    context,
-                    icon: Icons.timer,
-                    label: 'Focus',
-                    color: Colors.red,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const PomodoroScreen(),
+                      ),
+                      _buildQuickActionItem(
+                        context,
+                        width: buttonWidth,
+                        icon: Icons.timer,
+                        label: 'Focus',
+                        color: Colors.red,
+                        delay: 400,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const PomodoroScreen()),
                         ),
-                      );
-                    },
+                      ),
+                    ].map((widget) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: widget,
+                    )).toList(),
                   ),
-                ),
-              ],
+                );
+              },
             ),
             const SizedBox(height: 24),
             
@@ -479,6 +475,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildQuickActionItem(
+    BuildContext context, {
+    required double width,
+    required IconData icon,
+    required String label,
+    required Color color,
+    required int delay,
+    required VoidCallback onTap,
+  }) {
+    return ScaleIn(
+      delay: Duration(milliseconds: delay),
+      child: SizedBox(
+        width: width,
+        child: _buildQuickAction(
+          context,
+          icon: icon,
+          label: label,
+          color: color,
+          onTap: onTap,
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickAction(
     BuildContext context, {
     required IconData icon,
@@ -490,22 +510,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

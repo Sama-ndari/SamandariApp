@@ -23,9 +23,6 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
   late String _notes;
   late bool _reminderEnabled;
   late TimeOfDay _reminderTime;
-  late HabitType _type;
-  late double? _goalValue;
-  late String? _goalUnit;
 
   @override
   void initState() {
@@ -36,15 +33,12 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
     _color = widget.habit?.color ?? Colors.blue.value;
     _notes = widget.habit?.notes ?? '';
     _reminderEnabled = widget.habit?.reminderEnabled ?? false;
-    if (widget.habit?.reminderTime != null && widget.habit!.reminderTime!.isNotEmpty) {
-      final timeParts = widget.habit!.reminderTime!.split(':');
+    if (widget.habit?.reminderTime != null && widget.habit!.reminderTime.isNotEmpty) {
+      final timeParts = widget.habit!.reminderTime.split(':');
       _reminderTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
     } else {
       _reminderTime = const TimeOfDay(hour: 9, minute: 0);
     }
-    _type = widget.habit?.type ?? HabitType.yesNo;
-    _goalValue = widget.habit?.goalValue;
-    _goalUnit = widget.habit?.goalUnit;
   }
 
   void _submit() {
@@ -62,9 +56,6 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
           ..frequency = _frequency
           ..color = _color
           ..notes = _notes
-          ..type = _type
-          ..goalValue = _type != HabitType.yesNo ? _goalValue : null
-          ..goalUnit = _type != HabitType.yesNo ? _goalUnit : null
           ..reminderEnabled = _reminderEnabled
           ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
         _habitService.updateHabit(habit);
@@ -80,10 +71,7 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
           ..createdAt = DateTime.now()
           ..notes = _notes
           ..reminderEnabled = _reminderEnabled
-          ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}'
-          ..type = _type
-          ..goalValue = _type != HabitType.yesNo ? _goalValue : null
-          ..goalUnit = _type != HabitType.yesNo ? _goalUnit : null;
+          ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
         _habitService.addHabit(newHabit);
       }
 
@@ -134,58 +122,6 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
                 decoration: const InputDecoration(labelText: 'Description'),
                 onSaved: (value) => _description = value ?? '',
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<HabitType>(
-                value: _type,
-                decoration: const InputDecoration(labelText: 'Habit Type'),
-                items: HabitType.values.map((type) {
-                  return DropdownMenuItem(
-                    value: type,
-                    child: Text(type.toString().split('.').last),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _type = value!;
-                  });
-                },
-              ),
-              if (_type == HabitType.measurable || _type == HabitType.timed)
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _goalValue?.toString(),
-                        decoration: const InputDecoration(labelText: 'Goal'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a goal';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Please enter a valid number';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) => _goalValue = double.parse(value!),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _goalUnit,
-                        decoration: const InputDecoration(labelText: 'Unit (e.g., km, min)'),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a unit';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) => _goalUnit = value!,
-                      ),
-                    ),
-                  ],
-                ),
               const SizedBox(height: 16),
               TextFormField(
                 initialValue: _notes,

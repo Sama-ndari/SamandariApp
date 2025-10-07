@@ -2,16 +2,6 @@ import 'package:hive/hive.dart';
 
 part 'habit.g.dart';
 
-@HiveType(typeId: 6)
-enum HabitType {
-  @HiveField(0)
-  yesNo,
-  @HiveField(1)
-  measurable,
-  @HiveField(2)
-  timed,
-}
-
 @HiveType(typeId: 12)
 enum HabitFrequency {
   @HiveField(0)
@@ -52,15 +42,6 @@ class Habit extends HiveObject {
 
   @HiveField(10)
   late String reminderTime; // Stored as 'HH:mm'
-
-  @HiveField(11)
-  late HabitType type;
-
-  @HiveField(12)
-  late double? goalValue; // For measurable/timed habits
-
-  @HiveField(13)
-  late String? goalUnit; // e.g., 'L', 'km', 'min', 'pages'
 
   // Calculate current streak
   int get currentStreak {

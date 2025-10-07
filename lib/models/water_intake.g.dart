@@ -8,7 +8,7 @@ part of 'water_intake.dart';
 
 class WaterIntakeAdapter extends TypeAdapter<WaterIntake> {
   @override
-  final int typeId = 12;
+  final int typeId = 6;
 
   @override
   WaterIntake read(BinaryReader reader) {

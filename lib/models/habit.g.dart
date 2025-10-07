@@ -24,13 +24,15 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..color = fields[4] as int
       ..completionDates = (fields[5] as List).cast<DateTime>()
       ..createdAt = fields[6] as DateTime
-      ..notes = fields[7] as String;
+      ..notes = fields[7] as String
+      ..reminderEnabled = fields[9] as bool
+      ..reminderTime = fields[10] as String;
   }
 
   @override
   void write(BinaryWriter writer, Habit obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -46,7 +48,11 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..writeByte(6)
       ..write(obj.createdAt)
       ..writeByte(7)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(9)
+      ..write(obj.reminderEnabled)
+      ..writeByte(10)
+      ..write(obj.reminderTime);
   }
 
   @override
@@ -62,7 +68,7 @@ class HabitAdapter extends TypeAdapter<Habit> {
 
 class HabitFrequencyAdapter extends TypeAdapter<HabitFrequency> {
   @override
-  final int typeId = 6;
+  final int typeId = 12;
 
   @override
   HabitFrequency read(BinaryReader reader) {

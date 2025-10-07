@@ -14,11 +14,15 @@ import 'package:samapp/models/app_statistics.dart';
 import 'package:samapp/models/backup_settings.dart';
 import 'package:samapp/models/pomodoro_session.dart';
 import 'package:samapp/models/goal_milestone.dart';
+import 'package:samapp/models/legacy_capsule.dart';
 
 class HiveService {
   static Future<void> init() async {
     // Initialize Hive
     await Hive.initFlutter();
+
+    // ONE-TIME MIGRATION: Clear the old legacy capsules box to prevent crash
+    await Hive.deleteBoxFromDisk('legacy_capsules');
 
     // Register Adapters
     Hive.registerAdapter(TaskTypeAdapter());
@@ -44,6 +48,7 @@ class HiveService {
     Hive.registerAdapter(BackupSettingsAdapter());
     Hive.registerAdapter(PomodoroSessionAdapter());
     Hive.registerAdapter(GoalMilestoneAdapter());
+    Hive.registerAdapter(LegacyCapsuleAdapter());
 
     // Open Boxes
     await Hive.openBox<Task>('tasks');
@@ -61,5 +66,6 @@ class HiveService {
     await Hive.openBox<BackupSettings>('backup_settings');
     await Hive.openBox<PomodoroSession>('pomodoro_sessions');
     await Hive.openBox<GoalMilestone>('goal_milestones');
+    await Hive.openBox<LegacyCapsule>('legacy_capsules');
   }
 }

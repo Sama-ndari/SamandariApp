@@ -268,21 +268,21 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           ],
           Expanded(
             child: InkWell(
-              onTap: () async {
-                if (_viewMode == ExpenseViewMode.total) return; // Don't show picker in total view
-
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _selectedDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (date != null) {
-                  setState(() {
-                    _selectedDate = date;
-                  });
-                }
-              },
+              onTap: _viewMode == ExpenseViewMode.total
+                  ? null
+                  : () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        setState(() {
+                          _selectedDate = date;
+                        });
+                      }
+                    },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
@@ -293,11 +293,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         const Icon(Icons.calendar_today, size: 18),
                       if (_viewMode != ExpenseViewMode.total)
                         const SizedBox(width: 8),
-                      Text(
-                        _getViewModeText(),
-                        style: TextStyle(
-                          fontSize: isLandscape ? 14 : 16,
-                          fontWeight: FontWeight.bold,
+                      Flexible(
+                        child: Text(
+                          _getViewModeText(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isLandscape ? 14 : 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],

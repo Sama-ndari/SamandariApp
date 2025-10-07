@@ -16,6 +16,8 @@ import 'package:samapp/screens/calendar_screen.dart';
 import 'package:samapp/screens/global_search_screen.dart';
 import 'package:samapp/screens/notification_settings_screen.dart';
 import 'package:samapp/screens/demo_ui_screen.dart';
+import 'package:samapp/screens/pomodoro_screen.dart';
+import 'package:samapp/screens/ai_hub_screen.dart';
 import 'package:samapp/services/hive_service.dart';
 import 'package:samapp/services/notification_service.dart';
 import 'package:samapp/theme/theme.dart';
@@ -201,11 +203,24 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     builder: (context) => const DemoUIScreen(),
                   ),
                 );
+              } else if (value == 'pomodoro') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => PomodoroScreen(),
+                  ),
+                );
+              } else if (value == 'ai_hub') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AiHubScreen(),
+                  ),
+                );
               } else if (value == 'theme') {
                 Provider.of<ThemeService>(context, listen: false).toggleTheme();
               }
             },
             itemBuilder: (BuildContext context) {
+              final themeProvider = Provider.of<ThemeService>(context, listen: false);
               return <PopupMenuEntry<String>>[
                 const PopupMenuItem<String>(
                   value: 'contacts',
@@ -219,6 +234,20 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   child: ListTile(
                     leading: Icon(Icons.backup_outlined),
                     title: Text('Backup'),
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'ai_hub',
+                  child: ListTile(
+                    leading: Icon(Icons.smart_toy_outlined),
+                    title: Text('AI Hub'),
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'pomodoro',
+                  child: ListTile(
+                    leading: Icon(Icons.timer_outlined),
+                    title: Text('Pomodoro Timer'),
                   ),
                 ),
                 const PopupMenuItem<String>(
@@ -239,14 +268,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   value: 'theme',
                   child: ListTile(
                     leading: Icon(
-                      Provider.of<ThemeService>(context, listen: false).isDarkMode 
+                      themeProvider.isDarkMode 
                         ? Icons.light_mode 
                         : Icons.dark_mode,
                     ),
                     title: Text(
-                      Provider.of<ThemeService>(context, listen: false).isDarkMode 
-                        ? 'Light Mode' 
-                        : 'Dark Mode',
+                      themeProvider.isDarkMode ? 'Light Mode' : 'Dark Mode',
                     ),
                   ),
                 ),
