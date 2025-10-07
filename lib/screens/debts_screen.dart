@@ -6,7 +6,6 @@ import 'package:samapp/models/debt.dart';
 import 'package:samapp/services/debt_service.dart';
 import 'package:samapp/screens/add_edit_debt_screen.dart';
 import 'package:samapp/widgets/empty_state.dart';
-import 'package:samapp/screens/debt_summary_screen.dart';
 
 class DebtsScreen extends StatefulWidget {
   const DebtsScreen({super.key});
@@ -27,132 +26,134 @@ class _DebtsScreenState extends State<DebtsScreen> {
       body: ValueListenableBuilder(
         valueListenable: Hive.box<Debt>('debts').listenable(),
         builder: (context, Box<Debt> box, _) {
-          List<Debt> debts = box.values.toList().cast<Debt>();
+          final allDebts = box.values.toList();
+          final summary = _debtService.getDebtSummary();
 
-          // Filter debts
+          List<Debt> filteredDebts = allDebts;
           if (_currentFilter == DebtFilter.paid) {
-            debts = debts.where((d) => d.isPaid).toList();
+            filteredDebts = allDebts.where((d) => d.isPaid).toList();
           } else if (_currentFilter == DebtFilter.unpaid) {
-            debts = debts.where((d) => !d.isPaid).toList();
+            filteredDebts = allDebts.where((d) => !d.isPaid).toList();
           }
 
-          // Sort debts: unpaid first, then by due date (earliest first)
-          debts.sort((a, b) {
-            if (a.isPaid != b.isPaid) {
-              return a.isPaid ? 1 : -1;
-            }
+          filteredDebts.sort((a, b) {
+            if (a.isPaid != b.isPaid) return a.isPaid ? 1 : -1;
             return a.dueDate.compareTo(b.dueDate);
           });
 
-          if (debts.isEmpty) {
-            return EmptyStates.noDebts(
-              context,
-              onAdd: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const AddEditDebtScreen(),
-                  ),
-                );
-              },
-            );
-          }
-          
           return Column(
             children: [
+              _buildSummaryHeader(summary['totalOwed']!, summary['totalOwedToYou']!),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: SegmentedButton<DebtFilter>(
                   segments: const [
-                    ButtonSegment(value: DebtFilter.all, label: Text('All')),
-                    ButtonSegment(value: DebtFilter.unpaid, label: Text('Unpaid')),
-                    ButtonSegment(value: DebtFilter.paid, label: Text('Paid')),
+                    ButtonSegment(value: DebtFilter.all, label: Text('All'), icon: Icon(Icons.list)),
+                    ButtonSegment(value: DebtFilter.unpaid, label: Text('Unpaid'), icon: Icon(Icons.hourglass_bottom)),
+                    ButtonSegment(value: DebtFilter.paid, label: Text('Paid'), icon: Icon(Icons.check_circle)),
                   ],
                   selected: {_currentFilter},
-                  onSelectionChanged: (Set<DebtFilter> newSelection) {
+                  onSelectionChanged: (newSelection) {
                     setState(() {
                       _currentFilter = newSelection.first;
                     });
                   },
-                  style: SegmentedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                  ),
                 ),
               ),
-              Expanded(
-                child: ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: debts.length,
-            itemBuilder: (context, index) {
-              final debt = debts[index];
-              return Dismissible(
-                key: Key(debt.id),
-                direction: DismissDirection.endToStart,
-                onDismissed: (direction) {
-                  _debtService.deleteDebt(debt.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${debt.person} deleted'),
-                      action: SnackBarAction(
-                        label: 'UNDO',
-                        onPressed: () {
-                          _debtService.updateDebt(debt);
+              if (filteredDebts.isEmpty)
+                Expanded(
+                  child: EmptyStates.noDebts(context, onAdd: _navigateToAddDebt),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filteredDebts.length,
+                    itemBuilder: (context, index) {
+                      final debt = filteredDebts[index];
+                      return Dismissible(
+                        key: Key(debt.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (direction) {
+                          _debtService.deleteDebt(debt.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${debt.person} deleted'),
+                              action: SnackBarAction(
+                                label: 'UNDO',
+                                onPressed: () {
+                                  _debtService.updateDebt(debt);
+                                },
+                              ),
+                            ),
+                          );
                         },
-                      ),
-                    ),
-                  );
-                },
-                background: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(16),
+                        background: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        child: _buildDebtCard(context, debt),
+                      );
+                    },
                   ),
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                child: _buildDebtCard(context, debt),
-              );
-            },
-          ),
-              ),
             ],
           );
         },
       ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'debts_fab',
+        onPressed: _navigateToAddDebt,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _navigateToAddDebt() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const AddEditDebtScreen()),
+    );
+  }
+
+  Widget _buildSummaryHeader(double totalOwed, double totalOwedToYou) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.secondary,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          FloatingActionButton(
-            heroTag: 'debts_summary_fab',
-            mini: true,
-            onPressed: () {
-              final summary = _debtService.getDebtSummary();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => DebtSummaryScreen(
-                    totalOwed: summary['totalOwed']!,
-                    totalOwedToYou: summary['totalOwedToYou']!,
-                  ),
-                ),
-              );
-            },
-            child: const Icon(Icons.info_outline),
-          ),
-          const SizedBox(width: 8),
-          FloatingActionButton(
-            heroTag: 'debts_fab',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const AddEditDebtScreen(),
-                ),
-              );
-            },
-            child: const Icon(Icons.add),
-          ),
+          _buildSummaryItem('You Owe', totalOwed, Colors.red[300]!),
+          _buildSummaryItem('Owed to You', totalOwedToYou, Colors.green[300]!),
         ],
       ),
+    );
+  }
+
+  Widget _buildSummaryItem(String title, double amount, Color color) {
+    return Column(
+      children: [
+        Text(title, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+        const SizedBox(height: 8),
+        Text(
+          formatMoney(amount),
+          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 
@@ -160,134 +161,90 @@ class _DebtsScreenState extends State<DebtsScreen> {
     final isPaid = debt.isPaid;
     final isOverdue = !isPaid && debt.dueDate.isBefore(DateTime.now());
     final isIOwe = debt.type == DebtType.iOwe;
-    final cardColor = isIOwe ? Colors.red : Colors.green;
-    
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => AddEditDebtScreen(debt: debt),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          border: Border(
-            left: BorderSide(
-              color: isPaid ? Colors.grey : cardColor,
-              width: 5,
-            ),
-            bottom: BorderSide(
-              color: Colors.grey.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-        ),
+    final cardColor = isIOwe ? Colors.red.shade300 : Colors.green.shade300;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: isPaid ? Colors.grey.shade300 : cardColor, width: 1.5),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => AddEditDebtScreen(debt: debt)),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Icon(
-                isPaid
-                    ? Icons.check_circle
-                    : (isIOwe ? Icons.arrow_upward : Icons.arrow_downward),
+                isIOwe ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
                 color: isPaid ? Colors.grey : cardColor,
-                size: 32,
+                size: 36,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            debt.person,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              decoration: isPaid ? TextDecoration.lineThrough : null,
-                              color: isPaid ? Colors.grey : null,
-                            ),
-                          ),
-                        ),
-                        if (isPaid)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'PAID',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
                     Text(
-                      debt.description,
+                      debt.person,
                       style: TextStyle(
-                        fontSize: 13,
-                        color: isPaid ? Colors.grey : Colors.grey[700],
+                        fontSize: 17, 
+                        fontWeight: FontWeight.bold, 
+                        color: isPaid ? Colors.grey : null,
+                        decoration: isPaid ? TextDecoration.lineThrough : null,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    if (debt.description.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          debt.description,
+                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
+                        Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
                         Text(
                           'Due: ${DateFormat('MMM d, y').format(debt.dueDate)}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isOverdue
-                                ? Colors.red
-                                : (isPaid ? Colors.grey : Colors.grey[600]),
+                            color: isOverdue ? Colors.red.shade700 : Colors.grey.shade600,
                             fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
-                        if (isOverdue) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'OVERDUE',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Text(
-                formatMoney(debt.amount),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  decoration: isPaid ? TextDecoration.lineThrough : null,
-                  color: isPaid ? Colors.grey : cardColor,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    formatMoney(debt.amount),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isPaid ? Colors.grey : cardColor,
+                      decoration: isPaid ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                  if (isPaid)
+                    const Text('Paid', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+                  if (isOverdue)
+                    const Text('Overdue', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                ],
               ),
             ],
           ),

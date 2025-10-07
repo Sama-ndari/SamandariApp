@@ -50,7 +50,14 @@ class RecurringTaskService {
 
     switch (originalTask.recurringPattern) {
       case 'daily':
-        newDueDate = DateTime(now.year, now.month, now.day, 23, 59);
+        final today = DateTime(now.year, now.month, now.day, 23, 59);
+        // If the original due date is in the future, respect it.
+        // Otherwise, set it to today.
+        if (originalTask.dueDate.isAfter(now)) {
+          newDueDate = originalTask.dueDate;
+        } else {
+          newDueDate = today;
+        }
         break;
       case 'weekly':
         newDueDate = now.add(const Duration(days: 7));

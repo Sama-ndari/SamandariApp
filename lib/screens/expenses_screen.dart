@@ -115,13 +115,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               expense.date.day == now.day;
         }).toList();
       
-      case ExpenseViewMode.weekly:
-        final weekStart = now.subtract(Duration(days: now.weekday - 1));
-        final weekEnd = weekStart.add(const Duration(days: 6));
+      case ExpenseViewMode.weekly: {
+        // Adjust to ensure Monday is the start of the week (weekday is 1)
+        final daysToSubtract = now.weekday - 1;
+        final weekStart = DateTime(now.year, now.month, now.day - daysToSubtract);
+        final weekEnd = weekStart.add(const Duration(days: 7)); // Go up to the next Monday morning
+
         return allExpenses.where((expense) {
-          return expense.date.isAfter(weekStart.subtract(const Duration(days: 1))) &&
-              expense.date.isBefore(weekEnd.add(const Duration(days: 1)));
+          return !expense.date.isBefore(weekStart) && expense.date.isBefore(weekEnd);
         }).toList();
+      }
       
       case ExpenseViewMode.monthly:
         return allExpenses.where((expense) {
@@ -138,10 +141,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     switch (_viewMode) {
       case ExpenseViewMode.daily:
         return DateFormat('EEEE, MMMM d, y').format(_selectedDate);
-      case ExpenseViewMode.weekly:
-        final weekStart = _selectedDate.subtract(Duration(days: _selectedDate.weekday - 1));
+      case ExpenseViewMode.weekly: {
+        final daysToSubtract = _selectedDate.weekday - 1;
+        final weekStart = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day - daysToSubtract);
         final weekEnd = weekStart.add(const Duration(days: 6));
         return 'Week: ${DateFormat('MMM d').format(weekStart)} - ${DateFormat('MMM d, y').format(weekEnd)}';
+      }
       case ExpenseViewMode.monthly:
         return DateFormat('MMMM yyyy').format(_selectedDate);
       case ExpenseViewMode.total:
@@ -159,7 +164,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           _selectedDate = _selectedDate.subtract(const Duration(days: 7));
           break;
         case ExpenseViewMode.monthly:
-          _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1, _selectedDate.day);
+          _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1, 1);
           break;
         case ExpenseViewMode.total:
           break;
@@ -177,7 +182,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           _selectedDate = _selectedDate.add(const Duration(days: 7));
           break;
         case ExpenseViewMode.monthly:
-          _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1, _selectedDate.day);
+          _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1, 1);
           break;
         case ExpenseViewMode.total:
           break;
@@ -263,7 +268,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           ],
           Expanded(
             child: InkWell(
-              onTap: _viewMode != ExpenseViewMode.total ? () async {
+              onTap: () async {
+                if (_viewMode == ExpenseViewMode.total) return; // Don't show picker in total view
+
                 final date = await showDatePicker(
                   context: context,
                   initialDate: _selectedDate,
@@ -275,7 +282,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     _selectedDate = date;
                   });
                 }
-              } : null,
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Center(
