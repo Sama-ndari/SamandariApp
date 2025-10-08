@@ -21,43 +21,63 @@ class _DailyInspirationWidgetState extends State<DailyInspirationWidget> {
   @override
   void initState() {
     super.initState();
-    _currentQuoteList = inspirationalQuotes;
-    _currentIndex = Random().nextInt(_currentQuoteList.length);
+    _setRandomCategoryAndQuote();
+  }
+
+  void _setRandomCategoryAndQuote() {
+    final random = Random();
+    final categories = QuoteCategory.values;
+    _currentCategory = categories[random.nextInt(categories.length)];
+    _setQuoteListForCategory();
+    _currentIndex = random.nextInt(_currentQuoteList.length);
+  }
+
+  void _setQuoteListForCategory() {
+    switch (_currentCategory) {
+      case QuoteCategory.inspirational:
+        _currentQuoteList = inspirationalQuotes;
+        break;
+      case QuoteCategory.scripture:
+        _currentQuoteList = scriptures;
+        break;
+      case QuoteCategory.stoic:
+        _currentQuoteList = stoicQuotes;
+        break;
+      case QuoteCategory.techAndBusiness:
+        _currentQuoteList = techQuotes;
+        break;
+    }
   }
 
   void _switchCategory() {
     setState(() {
-      switch (_currentCategory) {
-        case QuoteCategory.inspirational:
-          _currentCategory = QuoteCategory.scripture;
-          _currentQuoteList = scriptures;
-          break;
-        case QuoteCategory.scripture:
-          _currentCategory = QuoteCategory.stoic;
-          _currentQuoteList = stoicQuotes;
-          break;
-        case QuoteCategory.stoic:
-          _currentCategory = QuoteCategory.techAndBusiness;
-          _currentQuoteList = techQuotes;
-          break;
-        case QuoteCategory.techAndBusiness:
-          _currentCategory = QuoteCategory.inspirational;
-          _currentQuoteList = inspirationalQuotes;
-          break;
-      }
+      final currentCategoryIndex = QuoteCategory.values.indexOf(_currentCategory);
+      final nextCategoryIndex = (currentCategoryIndex + 1) % QuoteCategory.values.length;
+      _currentCategory = QuoteCategory.values[nextCategoryIndex];
+      _setQuoteListForCategory();
       _currentIndex = 0; // Always start with the first quote of the new category
     });
   }
 
   void _nextQuote() {
     setState(() {
-      _currentIndex = (_currentIndex + 1) % _currentQuoteList.length;
+      // 60% chance to switch category
+      if (Random().nextInt(10) < 6) {
+        _setRandomCategoryAndQuote();
+      } else {
+        _currentIndex = (_currentIndex + 1) % _currentQuoteList.length;
+      }
     });
   }
 
   void _previousQuote() {
     setState(() {
-      _currentIndex = (_currentIndex - 1 + _currentQuoteList.length) % _currentQuoteList.length;
+      // 60% chance to switch category
+      if (Random().nextInt(10) < 6) {
+        _setRandomCategoryAndQuote();
+      } else {
+        _currentIndex = (_currentIndex - 1 + _currentQuoteList.length) % _currentQuoteList.length;
+      }
     });
   }
 

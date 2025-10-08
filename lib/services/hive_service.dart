@@ -21,9 +21,6 @@ class HiveService {
     // Initialize Hive
     await Hive.initFlutter();
 
-    // ONE-TIME MIGRATION: Clear the old legacy capsules box to prevent crash
-    await Hive.deleteBoxFromDisk('legacy_capsules');
-
     // Register Adapters
     Hive.registerAdapter(TaskTypeAdapter());
     Hive.registerAdapter(PriorityAdapter());

@@ -34,6 +34,125 @@ class _TasksScreenState extends State<TasksScreen> {
   }
   final TaskService _taskService = TaskService();
 
+  String _getRelativeDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final taskDate = DateTime(date.year, date.month, date.day);
+
+    if (taskDate.isBefore(today)) {
+      return 'Overdue';
+    } else if (taskDate == today) {
+      return 'Today';
+    } else if (taskDate == tomorrow) {
+      return 'Tomorrow';
+    } else {
+      return DateFormat.yMMMEd().format(date);
+    }
+  }
+
+  Map<String, List<Task>> _groupTasks(List<Task> tasks) {
+    final groups = <String, List<Task>>{};
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+
+    final overdue = tasks.where((t) => !t.isCompleted && DateTime(t.dueDate.year, t.dueDate.month, t.dueDate.day).isBefore(today)).toList();
+    final todayTasks = tasks.where((t) => !t.isCompleted && isSameDay(t.dueDate, today)).toList();
+    final tomorrowTasks = tasks.where((t) => !t.isCompleted && isSameDay(t.dueDate, tomorrow)).toList();
+    final upcoming = tasks.where((t) => !t.isCompleted && t.dueDate.isAfter(tomorrow)).toList();
+    final completed = tasks.where((t) => t.isCompleted).toList();
+
+    if (overdue.isNotEmpty) groups['Overdue'] = overdue;
+    if (todayTasks.isNotEmpty) groups['Today'] = todayTasks;
+    if (tomorrowTasks.isNotEmpty) groups['Tomorrow'] = tomorrowTasks;
+    if (upcoming.isNotEmpty) groups['Upcoming'] = upcoming;
+    if (completed.isNotEmpty && _filter.showCompleted) groups['Completed'] = completed;
+
+    return groups;
+  }
+
+  bool isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Widget _buildTaskTile(Task task) {
+    return Dismissible(
+      key: ValueKey(task.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) {
+        HapticService.delete();
+        _taskService.deleteTask(task.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${task.title} deleted')),
+        );
+      },
+      background: Container(
+        color: Colors.red,
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [ 
+            Text('Delete', style: TextStyle(color: Colors.white)),
+            SizedBox(width: 8),
+            Icon(Icons.delete, color: Colors.white),
+          ],
+        ),
+      ),
+      child: Hero(
+        tag: 'task_${task.id}',
+        child: Card(
+          elevation: 2.0,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(left: BorderSide(width: 5.0, color: _getPriorityColor(task.priority))),
+            ),
+            child: ListTile(
+              title: Text(
+                task.title,
+                style: TextStyle(
+                  decoration: task.isCompleted
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
+                ),
+              ),
+              subtitle: Text('${task.type.toString().split('.').last.substring(0, 1).toUpperCase()}${task.type.toString().split('.').last.substring(1)} - Due: ${_getRelativeDate(task.dueDate)}'),
+              leading: Checkbox(
+                value: task.isCompleted,
+                onChanged: (_) {
+                  final wasCompleted = task.isCompleted;
+                  _taskService.toggleTaskCompletion(task);
+                  HapticService.selectionClick();
+                  
+                  if (!wasCompleted) {
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      if (mounted) {
+                        NotificationType.success(
+                          context,
+                          title: 'Task Completed! 🎉',
+                          message: task.title,
+                        );
+                      }
+                    });
+                  }
+                },
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AddEditTaskScreen(task: task),
+                  ),
+                );
+              },
+            ), 
+          ),
+        ),
+      ), 
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,11 +206,25 @@ class _TasksScreenState extends State<TasksScreen> {
         valueListenable: Hive.box<Task>('tasks').listenable(),
         builder: (context, Box<Task> box, _) {
           var tasks = box.values.toList().cast<Task>();
+
+          // Automatically update overdue tasks
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          for (var task in tasks) {
+            if (!task.isCompleted && task.dueDate.isBefore(today)) {
+              task.dueDate = today;
+              _taskService.updateTask(task);
+            }
+          }
           
           // Apply filters
           if (_filter.isActive) {
             tasks = tasks.where((task) => _filter.matches(task)).toList();
           }
+          // Group tasks
+          final groupedTasks = _groupTasks(tasks);
+          final groupKeys = groupedTasks.keys.toList();
+
           if (tasks.isEmpty) {
             return EmptyStates.noTasks(
               context,
@@ -104,89 +237,36 @@ class _TasksScreenState extends State<TasksScreen> {
               },
             );
           }
+
           return SlideInFromBottom(
-            child: ReorderableListView.builder(
-            onReorder: (oldIndex, newIndex) {
-              _taskService.reorderTask(oldIndex, newIndex);
-            },
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              return Dismissible(
-                key: ValueKey(task.id),
-                direction: DismissDirection.endToStart,
-                onDismissed: (_) {
-                  HapticService.delete();
-                  _taskService.deleteTask(task.id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${task.title} deleted')),
-                  );
-                },
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [ 
-                      Text('Delete', style: TextStyle(color: Colors.white)),
-                      SizedBox(width: 8),
-                      Icon(Icons.delete, color: Colors.white),
-                    ],
-                  ),
-                ),
-                child: Hero(
-                  tag: 'task_${task.id}',
-                  child: Card(
-                    elevation: 2.0,
-                    margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                    child: Container(
+            child: ListView.builder(
+              itemCount: groupKeys.length,
+              itemBuilder: (context, index) {
+                final groupName = groupKeys[index];
+                final groupTasks = groupedTasks[groupName]!;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.fromLTRB(8, 16, 8, 8),
                       decoration: BoxDecoration(
-                        border: Border(left: BorderSide(width: 5.0, color: _getPriorityColor(task.priority))),
+                        color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: ListTile(
-                    title: Text(
-                      task.title,
-                      style: TextStyle(
-                        decoration: task.isCompleted
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                      ),
-                    ),
-                    subtitle: Text('${task.type.toString().split('.').last.substring(0, 1).toUpperCase()}${task.type.toString().split('.').last.substring(1)} - Due: ${DateFormat.yMd().format(task.dueDate)}'),
-                    leading: Checkbox(
-                      value: task.isCompleted,
-                      onChanged: (_) {
-                        final wasCompleted = task.isCompleted;
-                        _taskService.toggleTaskCompletion(task);
-                        HapticService.selectionClick();
-                        
-                        if (!wasCompleted) {
-                          Future.delayed(const Duration(milliseconds: 100), () {
-                            if (mounted) {
-                              NotificationType.success(
-                                context,
-                                title: 'Task Completed! 🎉',
-                                message: task.title,
-                              );
-                            }
-                          });
-                        }
-                      },
-                    ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => AddEditTaskScreen(task: task),
+                      child: Text(
+                        groupName,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSecondaryContainer,
                         ),
-                      );
-                    },
-                  ), 
-),
-                  ),
-), 
-              );
-            },
+                      ),
+                    ),
+                    ...groupTasks.map((task) => _buildTaskTile(task)),
+                  ],
+                );
+              },
             ),
           );
         },
