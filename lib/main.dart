@@ -177,6 +177,17 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             },
             tooltip: 'Analytics',
           ),
+          IconButton(
+            icon: const Icon(Icons.smart_toy_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AiHubScreen(),
+                ),
+              );
+            },
+            tooltip: 'AI Hub',
+          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'contacts') {
@@ -234,13 +245,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   child: ListTile(
                     leading: Icon(Icons.backup_outlined),
                     title: Text('Backup'),
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'ai_hub',
-                  child: ListTile(
-                    leading: Icon(Icons.smart_toy_outlined),
-                    title: Text('AI Hub'),
                   ),
                 ),
                 const PopupMenuItem<String>(

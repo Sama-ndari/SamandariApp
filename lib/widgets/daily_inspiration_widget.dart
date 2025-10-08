@@ -3,6 +3,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:samapp/data/quotes_data.dart';
 import 'package:samapp/models/quote.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 enum QuoteCategory { inspirational, scripture, stoic, techAndBusiness }
 
@@ -15,8 +18,8 @@ class DailyInspirationWidget extends StatefulWidget {
 
 class _DailyInspirationWidgetState extends State<DailyInspirationWidget> {
   QuoteCategory _currentCategory = QuoteCategory.inspirational;
-  late int _currentIndex;
-  late List<Quote> _currentQuoteList;
+  int? _currentIndex;
+  List<Quote>? _currentQuoteList;
 
   @override
   void initState() {
@@ -24,12 +27,63 @@ class _DailyInspirationWidgetState extends State<DailyInspirationWidget> {
     _setRandomCategoryAndQuote();
   }
 
-  void _setRandomCategoryAndQuote() {
+  Future<void> _setRandomCategoryAndQuote() async {
     final random = Random();
     final categories = QuoteCategory.values;
-    _currentCategory = categories[random.nextInt(categories.length)];
-    _setQuoteListForCategory();
-    _currentIndex = random.nextInt(_currentQuoteList.length);
+    final newCategory = categories[random.nextInt(categories.length)];
+
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    final isOnline = connectivityResult != ConnectivityResult.none;
+
+    Quote? dynamicQuote;
+    if (isOnline) {
+      dynamicQuote = await _getDynamicQuote(newCategory);
+    }
+
+    if (mounted) {
+      setState(() {
+        _currentCategory = newCategory;
+        if (dynamicQuote != null) {
+          _currentQuoteList = [dynamicQuote];
+          _currentIndex = 0;
+        } else {
+          // Fallback to static list
+          _setQuoteListForCategory();
+          _currentIndex = random.nextInt(_currentQuoteList!.length);
+        }
+      });
+    }
+  }
+
+  Future<Quote?> _getDynamicQuote(QuoteCategory category) async {
+    try {
+      final categoryName = category.toString().split('.').last;
+      final prompt = 'Generate one short, original quote about $categoryName. The quote must be under 25 words and sound inspiring and human. Respond ONLY in this exact Dart format, nothing else:\n\nQuote(text: "<quote text>", author: "<author name>")';
+
+      final url = Uri.parse('https://creative-muse-backend.vercel.app/api/get-muse');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'prompt': prompt}),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body)['muse'];
+        // Use a regular expression to parse the custom format
+        final regExp = RegExp(r'Quote\(text: "(.*?)", author: "(.*?)"\)');
+        final match = regExp.firstMatch(responseBody);
+
+        if (match != null && match.groupCount == 2) {
+          final text = match.group(1)!;
+          final author = match.group(2)!;
+          return Quote(text: text, author: author);
+        }
+      }
+    } catch (e) {
+      // Silently fail and fallback to static quote
+      print('Failed to get dynamic quote: $e');
+    }
+    return null;
   }
 
   void _setQuoteListForCategory() {
@@ -65,7 +119,12 @@ class _DailyInspirationWidgetState extends State<DailyInspirationWidget> {
       if (Random().nextInt(10) < 6) {
         _setRandomCategoryAndQuote();
       } else {
-        _currentIndex = (_currentIndex + 1) % _currentQuoteList.length;
+        // If we are showing a dynamic quote, fetch a new one
+        if (_currentQuoteList?.length == 1) {
+          _setRandomCategoryAndQuote();
+        } else {
+          _currentIndex = (_currentIndex! + 1) % _currentQuoteList!.length;
+        }
       }
     });
   }
@@ -76,14 +135,24 @@ class _DailyInspirationWidgetState extends State<DailyInspirationWidget> {
       if (Random().nextInt(10) < 6) {
         _setRandomCategoryAndQuote();
       } else {
-        _currentIndex = (_currentIndex - 1 + _currentQuoteList.length) % _currentQuoteList.length;
+        // If we are showing a dynamic quote, fetch a new one
+        if (_currentQuoteList?.length == 1) {
+          _setRandomCategoryAndQuote();
+        } else {
+          _currentIndex = (_currentIndex! - 1 + _currentQuoteList!.length) % _currentQuoteList!.length;
+        }
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final quote = _currentQuoteList[_currentIndex];
+    // If the quote list hasn't been initialized yet, show a loading indicator.
+    if (_currentQuoteList == null || _currentIndex == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final quote = _currentQuoteList![_currentIndex!];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

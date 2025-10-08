@@ -11,6 +11,7 @@ import 'package:hive/hive.dart';
 import 'package:samapp/models/note.dart';
 import 'package:samapp/models/journal_entry.dart';
 import 'package:uuid/uuid.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class AiHubScreen extends StatefulWidget {
   const AiHubScreen({super.key});
@@ -74,9 +75,12 @@ class _AiHubScreenState extends State<AiHubScreen> {
   ];
 
   void _showMissionCategories(BuildContext context) {
+    // Capture the correct context before showing the dialog.
+    final screenContext = context;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Choose a Mission Category'),
         content: SizedBox(
           width: double.maxFinite,
@@ -93,8 +97,9 @@ class _AiHubScreenState extends State<AiHubScreen> {
               final category = _missionCategories[index];
               return InkWell(
                 onTap: () {
-                  Navigator.of(context).pop(); // Close category dialog
-                  _showRandomMission(context, category);
+                  Navigator.of(dialogContext).pop(); // Close category dialog
+                  // Use the stable screenContext to show the next dialog.
+                  _showRandomMission(screenContext, category);
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: Card(
@@ -127,12 +132,52 @@ class _AiHubScreenState extends State<AiHubScreen> {
     );
   }
 
-  void _showRandomMission(BuildContext context, MissionCategory category) {
-    if (category.missions.isEmpty) return;
+  Future<void> _showRandomMission(BuildContext context, MissionCategory category) async {
+    // Show a loading dialog while fetching the mission
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
-    final random = Random();
-    final mission = category.missions[random.nextInt(category.missions.length)];
+    String? mission;
 
+    try {
+      final connectivityResult = await (Connectivity().checkConnectivity());
+      final isOnline = connectivityResult != ConnectivityResult.none;
+
+      if (isOnline) {
+        final prompt = 'Write one short, playful mission under 15 words for the category \'${category.name}\'. It should feel motivating, specific, and fun to complete.';
+        final url = Uri.parse('https://creative-muse-backend.vercel.app/api/get-muse');
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'prompt': prompt}),
+        ).timeout(const Duration(seconds: 15));
+
+        if (response.statusCode == 200) {
+          mission = jsonDecode(response.body)['muse'];
+        }
+      }
+    } catch (e) {
+      // Log the error for debugging, but otherwise fail silently.
+      print('Error fetching dynamic mission: $e');
+    } finally {
+      // Ensure the loading dialog is always closed.
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      // If the mission is still null (due to offline or error), get a static one.
+      mission ??= _getStaticMission(category);
+
+      // Show the final mission dialog.
+      _showMissionDialog(context, category, mission!);
+    }
+
+  }
+
+  void _showMissionDialog(BuildContext context, MissionCategory category, String mission) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -159,6 +204,13 @@ class _AiHubScreenState extends State<AiHubScreen> {
         ],
       ),
     );
+  }
+
+  // Helper method to get a mission from the static offline list
+  String _getStaticMission(MissionCategory category) {
+    if (category.missions.isEmpty) return "No missions available for this category.";
+    final random = Random();
+    return category.missions[random.nextInt(category.missions.length)];
   }
 
   String _getRecentContext() {
