@@ -59,18 +59,44 @@ class DynamicChallengeService {
     );
   }
 
-  /// Finds a habit with a low completion rate in the last 30 days.
   ChallengeAnalysisResult? _findLowHabitStreak() {
     final habitBox = Hive.box<Habit>('habits');
     if (habitBox.values.isEmpty) return null;
 
     Habit? leastCompletedHabit;
-    double lowestCompletionRate = 1.1; // Start above 1.0 (100%)
+    double lowestCompletionRate = 1.1; // Start above 100%
 
     for (var habit in habitBox.values) {
       final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
       final recentCompletions = habit.completionDates.where((d) => d.isAfter(thirtyDaysAgo)).length;
-      final rate = recentCompletions / 30.0;
+      double expectedCompletions = 30.0;
+
+      switch (habit.frequency) {
+        case HabitFrequency.daily:
+          expectedCompletions = 30.0;
+          break;
+        case HabitFrequency.specificDays:
+          if (habit.specificWeekdays != null && habit.specificWeekdays!.isNotEmpty) {
+            expectedCompletions = 0;
+            for (int i = 0; i < 30; i++) {
+              final date = DateTime.now().subtract(Duration(days: i));
+              if (habit.specificWeekdays!.contains(date.weekday)) {
+                expectedCompletions++;
+              }
+            }
+          }
+          break;
+        case HabitFrequency.timesPerWeek:
+          if (habit.weeklyTarget != null) {
+            // Approximate number of weeks in 30 days
+            expectedCompletions = habit.weeklyTarget! * (30 / 7);
+          }
+          break;
+      }
+
+      if (expectedCompletions == 0) continue; // Avoid division by zero
+
+      final rate = recentCompletions / expectedCompletions;
 
       if (rate < lowestCompletionRate) {
         lowestCompletionRate = rate;
@@ -78,15 +104,13 @@ class DynamicChallengeService {
       }
     }
 
-    if (leastCompletedHabit != null && lowestCompletionRate < 0.5) { // Only challenge if completion is below 50%
+    if (leastCompletedHabit != null && lowestCompletionRate < 0.5) { // Challenge if below 50%
       return ChallengeAnalysisResult(
-        description: 'The user is struggling with the habit \"${leastCompletedHabit.name}\".',
+        description: 'The user is struggling with the habit "${leastCompletedHabit.name}".',
         category: 'Habits',
         icon: Icons.repeat,
       );
     }
-
-    return null;
   }
 
   /// Finds the highest spending category in the last 30 days.

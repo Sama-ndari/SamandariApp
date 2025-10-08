@@ -11,8 +11,9 @@ class HabitStreakScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final streakService = HabitStreakService();
-    final currentStreak = streakService.getCurrentStreak(habit);
-    final longestStreak = streakService.getLongestStreak(habit);
+    final isWeekly = habit.frequency == HabitFrequency.timesPerWeek;
+    final currentStreak = isWeekly ? streakService.getCurrentWeeklyStreak(habit) : streakService.getCurrentStreak(habit);
+    final longestStreak = isWeekly ? streakService.getLongestWeeklyStreak(habit) : streakService.getLongestStreak(habit);
     final completionRate7Days = streakService.getCompletionRate(habit, 7);
     final completionRate30Days = streakService.getCompletionRate(habit, 30);
     final heatmapData = streakService.getHeatmapData(habit);
@@ -41,7 +42,7 @@ class HabitStreakScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '$currentStreak Day Streak',
+                        '$currentStreak ${isWeekly ? 'Week' : 'Day'} Streak',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -60,7 +61,7 @@ class HabitStreakScreen extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     'Longest Streak',
-                    '$longestStreak days',
+                    '$longestStreak ${isWeekly ? 'weeks' : 'days'}',
                     Icons.emoji_events,
                     Colors.orange,
                   ),
@@ -100,22 +101,16 @@ class HabitStreakScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Heatmap
+            // History View
             const Text(
-              'Last 90 Days',
+              'History',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildHeatmap(heatmapData),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildHeatmapLegend('Completed', Colors.green),
-                const SizedBox(width: 16),
-                _buildHeatmapLegend('Missed', Colors.grey.shade300),
-              ],
-            ),
+            if (habit.frequency == HabitFrequency.daily)
+              _buildDailyHeatmap(heatmapData)
+            else
+              _buildWeeklyHistoryList(streakService),
           ],
         ),
       ),
@@ -150,7 +145,7 @@ class HabitStreakScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeatmap(Map<DateTime, int> data) {
+  Widget _buildDailyHeatmap(Map<DateTime, int> data) {
     final sortedDates = data.keys.toList()..sort();
     
     // Group by weeks
@@ -220,6 +215,47 @@ class HabitStreakScreen extends StatelessWidget {
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
+    );
+  }
+
+  Widget _buildWeeklyHistoryList(HabitStreakService streakService) {
+    final today = DateTime.now();
+    final totalWeeksSinceCreation = (today.difference(habit.createdAt).inDays / 7).ceil();
+    final startOfThisWeek = today.subtract(Duration(days: today.weekday - 1));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: List.generate(totalWeeksSinceCreation, (weekIndex) {
+            final weekStart = startOfThisWeek.subtract(Duration(days: weekIndex * 7));
+            if (weekStart.isBefore(habit.createdAt.subtract(const Duration(days: 7)))) return const SizedBox.shrink();
+
+            String title;
+            String trailing;
+
+            if (habit.frequency == HabitFrequency.timesPerWeek) {
+              final weeklyCompletions = streakService.groupCompletionsByWeek(habit.completionDates);
+              final weekKey = DateFormat('yyyy-MM-dd').format(weekStart);
+              final completions = weeklyCompletions[weekKey]?.length ?? 0;
+              final target = habit.weeklyTarget ?? 1;
+              title = 'Week of ${DateFormat.yMMMd().format(weekStart)}';
+              trailing = '$completions / $target';
+            } else { // Specific Days
+              final weekEnd = weekStart.add(const Duration(days: 6));
+              final completionsInWeek = habit.completionDates.where((d) => d.isAfter(weekStart) && d.isBefore(weekEnd)).length;
+              final targetDaysInWeek = habit.specificWeekdays?.length ?? 0;
+              title = 'Week of ${DateFormat.yMMMd().format(weekStart)}';
+              trailing = '$completionsInWeek / $targetDaysInWeek';
+            }
+
+            return ListTile(
+              title: Text(title),
+              trailing: Text(trailing, style: const TextStyle(fontWeight: FontWeight.bold)),
+            );
+          }).reversed.toList(),
+        ),
+      ),
     );
   }
 }

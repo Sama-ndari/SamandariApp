@@ -1,4 +1,5 @@
 import 'package:samapp/models/habit.dart';
+import 'package:intl/intl.dart';
 
 class HabitStreakService {
   // Calculate current streak
@@ -128,5 +129,95 @@ class HabitStreakService {
     if (streak >= 7) return '🥉 Bronze';
     if (streak >= 3) return '⭐ Starter';
     return '🌱 Beginner';
+  }
+
+  // --- Weekly Habit Calculations ---
+
+  Map<String, List<DateTime>> groupCompletionsByWeek(List<DateTime> dates) {
+    final Map<String, List<DateTime>> weeks = {};
+    for (final date in dates) {
+      // Adjust date to find the Monday of that week
+      final startOfWeek = date.subtract(Duration(days: date.weekday - 1));
+      final weekKey = DateFormat('yyyy-MM-dd').format(startOfWeek);
+      if (weeks[weekKey] == null) {
+        weeks[weekKey] = [];
+      }
+      weeks[weekKey]!.add(date);
+    }
+    return weeks;
+  }
+
+  int getLongestWeeklyStreak(Habit habit) {
+    if (habit.frequency != HabitFrequency.timesPerWeek || habit.completionDates.isEmpty) {
+      return 0;
+    }
+
+    final weeklyCompletions = groupCompletionsByWeek(habit.completionDates);
+    final successfulWeeks = <DateTime>[];
+
+    weeklyCompletions.forEach((key, dates) {
+      if (dates.length >= (habit.weeklyTarget ?? 1)) {
+        // Add the start of the week (Monday) to represent a successful week
+        successfulWeeks.add(DateFormat('yyyy-MM-dd').parse(key));
+      }
+    });
+
+    if (successfulWeeks.isEmpty) return 0;
+
+    successfulWeeks.sort((a, b) => a.compareTo(b));
+
+    int longestStreak = 1;
+    int currentStreak = 1;
+
+    for (int i = 1; i < successfulWeeks.length; i++) {
+      final difference = successfulWeeks[i].difference(successfulWeeks[i - 1]).inDays;
+      if (difference == 7) { // Exactly one week apart
+        currentStreak++;
+      } else {
+        if (currentStreak > longestStreak) {
+          longestStreak = currentStreak;
+        }
+        currentStreak = 1;
+      }
+    }
+
+    return longestStreak > currentStreak ? longestStreak : currentStreak;
+  }
+
+  int getCurrentWeeklyStreak(Habit habit) {
+    if (habit.frequency != HabitFrequency.timesPerWeek || habit.completionDates.isEmpty) {
+      return 0;
+    }
+
+    final weeklyCompletions = groupCompletionsByWeek(habit.completionDates);
+    final successfulWeeks = <DateTime>{}; // Use a Set for faster lookups
+
+    weeklyCompletions.forEach((key, dates) {
+      if (dates.length >= (habit.weeklyTarget ?? 1)) {
+        successfulWeeks.add(DateFormat('yyyy-MM-dd').parse(key));
+      }
+    });
+
+    if (successfulWeeks.isEmpty) return 0;
+
+    var today = DateTime.now();
+    var mondayThisWeek = today.subtract(Duration(days: today.weekday - 1));
+    var checkWeek = DateTime(mondayThisWeek.year, mondayThisWeek.month, mondayThisWeek.day);
+
+    int streak = 0;
+
+    // If current week isn't successful, the streak must have ended last week.
+    // So, we start our check from the beginning of last week.
+    if (!successfulWeeks.contains(checkWeek)) {
+      checkWeek = checkWeek.subtract(const Duration(days: 7));
+    }
+
+    // Count backwards from our starting week
+    while (successfulWeeks.contains(checkWeek)) {
+      streak++;
+      checkWeek = checkWeek.subtract(const Duration(days: 7));
+    }
+    
+    return streak;
   }
 }

@@ -25,6 +25,8 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..completionDates = (fields[5] as List).cast<DateTime>()
       ..createdAt = fields[6] as DateTime
       ..notes = fields[7] as String
+      ..specificWeekdays = (fields[8] as List?)?.cast<int>()
+      ..weeklyTarget = fields[11] as int?
       ..reminderEnabled = fields[9] as bool
       ..reminderTime = fields[10] as String;
   }
@@ -32,7 +34,7 @@ class HabitAdapter extends TypeAdapter<Habit> {
   @override
   void write(BinaryWriter writer, Habit obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -49,6 +51,10 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..write(obj.createdAt)
       ..writeByte(7)
       ..write(obj.notes)
+      ..writeByte(8)
+      ..write(obj.specificWeekdays)
+      ..writeByte(11)
+      ..write(obj.weeklyTarget)
       ..writeByte(9)
       ..write(obj.reminderEnabled)
       ..writeByte(10)
@@ -76,7 +82,9 @@ class HabitFrequencyAdapter extends TypeAdapter<HabitFrequency> {
       case 0:
         return HabitFrequency.daily;
       case 1:
-        return HabitFrequency.weekly;
+        return HabitFrequency.specificDays;
+      case 2:
+        return HabitFrequency.timesPerWeek;
       default:
         return HabitFrequency.daily;
     }
@@ -88,8 +96,11 @@ class HabitFrequencyAdapter extends TypeAdapter<HabitFrequency> {
       case HabitFrequency.daily:
         writer.writeByte(0);
         break;
-      case HabitFrequency.weekly:
+      case HabitFrequency.specificDays:
         writer.writeByte(1);
+        break;
+      case HabitFrequency.timesPerWeek:
+        writer.writeByte(2);
         break;
     }
   }

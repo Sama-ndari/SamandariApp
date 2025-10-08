@@ -199,13 +199,40 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
 
     for (int i = 0; i < days; i++) {
       final date = dateRange.start.add(Duration(days: i));
-      int completions = 0;
+      int actualCompletions = 0;
+      int expectedCompletions = 0;
+
       for (var habit in habitBox.values) {
+        bool wasDue = false;
+        switch (habit.frequency) {
+          case HabitFrequency.daily:
+            wasDue = true;
+            break;
+          case HabitFrequency.specificDays:
+            if (habit.specificWeekdays?.contains(date.weekday) ?? false) {
+              wasDue = true;
+            }
+            break;
+          case HabitFrequency.timesPerWeek:
+            // This logic is complex for a daily chart, so we'll approximate
+            // by distributing the weekly target across the week.
+            if (habit.weeklyTarget != null) {
+              expectedCompletions += (habit.weeklyTarget! / 7).round();
+            }
+            break;
+        }
+
+        if (wasDue) {
+          expectedCompletions++;
+        }
+
         if (habit.completionDates.any((d) => d.year == date.year && d.month == date.month && d.day == date.day)) {
-          completions++;
+          actualCompletions++;
         }
       }
-      data.add(FlSpot(i.toDouble(), completions.toDouble()));
+
+      final double adherenceRate = expectedCompletions > 0 ? (actualCompletions / expectedCompletions) * 100 : 0.0;
+      data.add(FlSpot(i.toDouble(), adherenceRate.clamp(0, 100))); // Clamp to handle over-completion
     }
 
     return Card(
@@ -214,15 +241,15 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Habit Completions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Habit Adherence Rate', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             SizedBox(
               height: 200,
-              child: BarChart(
-                BarChartData(
+              child: LineChart(
+                LineChartData(
                   gridData: FlGridData(show: true),
                   titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30)),
+                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40, getTitlesWidget: (value, meta) => Text('${value.toInt()}%', style: const TextStyle(fontSize: 10)))),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
@@ -239,7 +266,11 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
                     topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(show: true),
-                  barGroups: data.map((spot) => BarChartGroupData(x: spot.x.toInt(), barRods: [BarChartRodData(toY: spot.y, color: Colors.purple, width: 8)])).toList(),
+                  lineBarsData: [
+                    LineChartBarData(spots: data, isCurved: true, color: Colors.purple, barWidth: 3, dotData: FlDotData(show: false), belowBarData: BarAreaData(show: true, color: Colors.purple.withOpacity(0.1))),
+                  ],
+                  minY: 0,
+                  maxY: 100,
                 ),
               ),
             ),

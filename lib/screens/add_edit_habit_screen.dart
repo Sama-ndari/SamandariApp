@@ -23,6 +23,8 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
   late String _notes;
   late bool _reminderEnabled;
   late TimeOfDay _reminderTime;
+  List<int> _specificWeekdays = [];
+  int _weeklyTarget = 1;
 
   @override
   void initState() {
@@ -30,6 +32,8 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
     _name = widget.habit?.name ?? '';
     _description = widget.habit?.description ?? '';
     _frequency = widget.habit?.frequency ?? HabitFrequency.daily;
+    _specificWeekdays = widget.habit?.specificWeekdays ?? [];
+    _weeklyTarget = widget.habit?.weeklyTarget ?? 1;
     _color = widget.habit?.color ?? Colors.blue.value;
     _notes = widget.habit?.notes ?? '';
     _reminderEnabled = widget.habit?.reminderEnabled ?? false;
@@ -48,7 +52,6 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
       final isUpdating = widget.habit != null;
 
       if (isUpdating) {
-        // Update existing habit
         final habit = widget.habit!;
         habit
           ..name = _name
@@ -57,12 +60,13 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
           ..color = _color
           ..notes = _notes
           ..reminderEnabled = _reminderEnabled
-          ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
+          ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}'
+          ..specificWeekdays = _frequency == HabitFrequency.specificDays ? _specificWeekdays : null
+          ..weeklyTarget = _frequency == HabitFrequency.timesPerWeek ? _weeklyTarget : null;
         _habitService.updateHabit(habit);
       } else {
-        // Create new habit and initialize all fields
         final newHabit = Habit()
-          ..id = '' // Service will assign it
+          ..id = ''
           ..name = _name
           ..description = _description
           ..frequency = _frequency
@@ -71,11 +75,12 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
           ..createdAt = DateTime.now()
           ..notes = _notes
           ..reminderEnabled = _reminderEnabled
-          ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}';
+          ..reminderTime = '${_reminderTime.hour.toString().padLeft(2, '0')}:${_reminderTime.minute.toString().padLeft(2, '0')}'
+          ..specificWeekdays = _frequency == HabitFrequency.specificDays ? _specificWeekdays : null
+          ..weeklyTarget = _frequency == HabitFrequency.timesPerWeek ? _weeklyTarget : null;
         _habitService.addHabit(newHabit);
       }
 
-      // Handle notification scheduling
       final notificationService = NotificationService();
       if (_reminderEnabled) {
         final habitToSchedule = isUpdating ? widget.habit! : _habitService.getHabitByName(_name);
@@ -133,21 +138,25 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
                 onSaved: (value) => _notes = value ?? '',
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<HabitFrequency>(
-                value: _frequency,
-                decoration: const InputDecoration(labelText: 'Frequency'),
-                items: HabitFrequency.values.map((frequency) {
-                  return DropdownMenuItem(
-                    value: frequency,
-                    child: Text(frequency.toString().split('.').last),
-                  );
-                }).toList(),
-                onChanged: (value) {
+              const Text('Frequency', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              SegmentedButton<HabitFrequency>(
+                segments: const <ButtonSegment<HabitFrequency>>[
+                  ButtonSegment(value: HabitFrequency.daily, label: Text('Daily')),
+                  ButtonSegment(value: HabitFrequency.specificDays, label: Text('Specific Days')),
+                  ButtonSegment(value: HabitFrequency.timesPerWeek, label: Text('Weekly Goal')),
+                ],
+                selected: {_frequency},
+                onSelectionChanged: (Set<HabitFrequency> newSelection) {
                   setState(() {
-                    _frequency = value!;
+                    _frequency = newSelection.first;
                   });
                 },
               ),
+              if (_frequency == HabitFrequency.specificDays)
+                _buildSpecificDaysSelector(),
+              if (_frequency == HabitFrequency.timesPerWeek)
+                _buildWeeklyTargetSelector(),
               const SizedBox(height: 20),
               const Divider(),
               SwitchListTile(
@@ -184,6 +193,64 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSpecificDaysSelector() {
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        children: List.generate(7, (index) {
+          final dayIndex = index + 1;
+          final isSelected = _specificWeekdays.contains(dayIndex);
+          return ChoiceChip(
+            label: Text(days[index]),
+            selected: isSelected,
+            onSelected: (bool selected) {
+              setState(() {
+                if (selected) {
+                  _specificWeekdays.add(dayIndex);
+                } else {
+                  _specificWeekdays.remove(dayIndex);
+                }
+                _specificWeekdays.sort();
+              });
+            },
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildWeeklyTargetSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Complete '),
+          DropdownButton<int>(
+            value: _weeklyTarget,
+            items: List.generate(7, (i) => i + 1).map((num) {
+              return DropdownMenuItem(
+                value: num,
+                child: Text(num.toString()),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _weeklyTarget = value;
+                });
+              }
+            },
+          ),
+          const Text(' times a week'),
+        ],
       ),
     );
   }

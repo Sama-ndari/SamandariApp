@@ -5,9 +5,11 @@ part 'habit.g.dart';
 @HiveType(typeId: 12)
 enum HabitFrequency {
   @HiveField(0)
-  daily,
+  daily, // Every day
   @HiveField(1)
-  weekly
+  specificDays, // e.g., Mon, Wed, Fri
+  @HiveField(2)
+  timesPerWeek, // e.g., 3 times a week
 }
 
 @HiveType(typeId: 7)
@@ -36,6 +38,11 @@ class Habit extends HiveObject {
   @HiveField(7)
   late String notes;
 
+  @HiveField(8)
+  List<int>? specificWeekdays; // 1 for Monday, 7 for Sunday
+
+  @HiveField(11) // Using 11 to avoid conflict with reminderTime at 10
+  int? weeklyTarget; // e.g., 3 times a week
 
   @HiveField(9)
   late bool reminderEnabled;

@@ -6,6 +6,7 @@ import 'package:samapp/screens/add_edit_habit_screen.dart';
 import 'package:samapp/widgets/empty_state.dart';
 import 'package:samapp/screens/habit_details_screen.dart';
 import 'package:samapp/screens/habit_streak_screen.dart';
+import 'package:samapp/services/habit_streak_service.dart';
 
 class HabitsScreen extends StatefulWidget {
   const HabitsScreen({super.key});
@@ -17,12 +18,13 @@ class HabitsScreen extends StatefulWidget {
 
 class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderStateMixin {
   final HabitService _habitService = HabitService();
+  final HabitStreakService _streakService = HabitStreakService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Habits'),
+        // title: const Text('Habits'),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -91,12 +93,21 @@ class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderSt
   }
 
   Widget _buildHabitCard(BuildContext context, Habit habit) {
-    final streak = _habitService.calculateStreak(habit);
-    final isCompletedToday = habit.completionDates.any((date) =>
-        date.year == DateTime.now().year &&
-        date.month == DateTime.now().month &&
-        date.day == DateTime.now().day);
-    final habitColor = Color(habit.color);
+    final isWeekly = habit.frequency == HabitFrequency.timesPerWeek;
+    final streak = isWeekly ? _streakService.getCurrentWeeklyStreak(habit) : _habitService.calculateStreak(habit);
+    
+    Color habitColor;
+    switch (habit.frequency) {
+      case HabitFrequency.daily:
+        habitColor = Colors.blueGrey[700]!;
+        break;
+      case HabitFrequency.specificDays:
+        habitColor = Colors.indigo[400]!;
+        break;
+      case HabitFrequency.timesPerWeek:
+        habitColor = Colors.teal[600]!;
+        break;
+    }
 
 
     return InkWell(
@@ -159,7 +170,7 @@ class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderSt
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '$streak day${streak == 1 ? '' : 's'} streak',
+                                '$streak ${isWeekly ? 'week' : 'day'}${streak == 1 ? '' : 's'} streak',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[700],
@@ -171,23 +182,14 @@ class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderSt
                         ],
                       ),
                     ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isCompletedToday
-                            ? Colors.green.withOpacity(0.1)
-                            : Colors.grey.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: _buildYesNoButton(habit, isCompletedToday),
-                    ),
+                    _buildCompletionControl(habit, habitColor),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(
-                      child: _buildCompletionStats(habit),
-                    ),
+                    _buildCompletionStats(habit, habitColor),
+                    const Spacer(),
                     TextButton.icon(
                       icon: const Icon(Icons.insights, size: 18),
                       label: const Text('Details'),
@@ -208,56 +210,95 @@ class _HabitsScreenState extends State<HabitsScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildCompletionStats(Habit habit) {
-    final now = DateTime.now();
-    final last7Days = List.generate(7, (i) {
-      return now.subtract(Duration(days: 6 - i));
-    });
+  Widget _buildCompletionStats(Habit habit, Color habitColor) {
+    if (habit.frequency == HabitFrequency.specificDays) {
+      final weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+      final targetDays = habit.specificWeekdays ?? [];
 
-    return Row(
-      children: last7Days.map((date) {
-        final dateOnly = DateTime(date.year, date.month, date.day);
-        final isCompleted = habit.completionDates.any((completedDate) =>
-            completedDate.year == dateOnly.year &&
-            completedDate.month == dateOnly.month &&
-            completedDate.day == dateOnly.day);
+      return Row(
+        children: List.generate(7, (index) {
+          final dayIndex = index + 1;
+          final isTargetDay = targetDays.contains(dayIndex);
+          if (!isTargetDay) return const SizedBox.shrink();
 
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: isCompleted
-                ? Color(habit.color).withOpacity(0.8)
-                : Colors.grey[300],
-            borderRadius: BorderRadius.circular(4),
+          final today = DateTime.now();
+          final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+          final dateForDay = startOfWeek.add(Duration(days: index));
+
+          final isCompleted = habit.completionDates.any((d) =>
+              d.year == dateForDay.year &&
+              d.month == dateForDay.month &&
+              d.day == dateForDay.day);
+
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: isCompleted ? habitColor.withOpacity(0.8) : Colors.grey[300],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Center(
+              child: Text(
+                weekDays[index],
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isCompleted ? Colors.white : Colors.grey[600],
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    }
+    // For other habit types, return an empty container.
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildCompletionControl(Habit habit, Color habitColor) {
+    switch (habit.frequency) {
+      case HabitFrequency.daily:
+      case HabitFrequency.specificDays:
+        final isCompletedToday = habit.completionDates.any((date) =>
+            date.year == DateTime.now().year &&
+            date.month == DateTime.now().month &&
+            date.day == DateTime.now().day);
+        return IconButton(
+          icon: Icon(
+            isCompletedToday ? Icons.check_circle : Icons.check_circle_outline,
+            color: isCompletedToday ? Colors.green : Colors.grey,
+            size: 32,
           ),
-          child: Center(
+          onPressed: () {
+            if (_habitService.isHabitDueToday(habit)) {
+              _habitService.toggleHabitCompletion(habit);
+            }
+          },
+        );
+      case HabitFrequency.timesPerWeek:
+        final completions = _habitService.getCompletionsThisWeek(habit);
+        final target = habit.weeklyTarget ?? 1;
+        return InkWell(
+          onTap: () => _habitService.toggleHabitCompletion(habit),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: completions >= target ? Colors.green.withOpacity(0.1) : habitColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: completions >= target ? Colors.green : habitColor, width: 1.5),
+            ),
             child: Text(
-              date.day.toString(),
+              '$completions / $target',
               style: TextStyle(
-                fontSize: 10,
-                color: isCompleted ? Colors.white : Colors.grey[600],
+                color: completions >= target ? Colors.green : habitColor,
                 fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
           ),
         );
-      }).toList(),
-    );
-  }
-
-  Widget _buildYesNoButton(Habit habit, bool isCompleted) {
-    return IconButton(
-      icon: Icon(
-        isCompleted ? Icons.check_circle : Icons.check_circle_outline,
-        color: isCompleted ? Colors.green : Colors.grey,
-        size: 32,
-      ),
-      onPressed: () {
-        _habitService.toggleHabitCompletion(habit);
-      },
-    );
+    }
   }
 
 }
