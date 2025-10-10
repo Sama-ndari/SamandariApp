@@ -78,10 +78,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             heroTag: 'expenses_summary_fab',
             mini: true,
             onPressed: () {
-              final spendingByCategory = _expenseService.getSpendingByCategory();
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => ExpenseSummaryScreen(spendingByCategory: spendingByCategory),
+                  builder: (context) => const ExpenseSummaryScreen(),
                 ),
               );
             },

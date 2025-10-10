@@ -75,6 +75,7 @@ dependencies:
   # Widgets
   home_widget: ^0.6.0
   azlistview: ^2.0.0
+  mailer: ^6.5.0
 
 dev_dependencies:
   flutter_test:

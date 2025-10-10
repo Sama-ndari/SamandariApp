@@ -83,27 +83,22 @@ class TaskTypeAdapter extends TypeAdapter<TaskType> {
   TaskType read(BinaryReader reader) {
     switch (reader.readByte()) {
       case 0:
-        return TaskType.daily;
+        return TaskType.oneTime;
       case 1:
-        return TaskType.weekly;
-      case 2:
-        return TaskType.monthly;
+        return TaskType.recurring;
       default:
-        return TaskType.daily;
+        return TaskType.oneTime;
     }
   }
 
   @override
   void write(BinaryWriter writer, TaskType obj) {
     switch (obj) {
-      case TaskType.daily:
+      case TaskType.oneTime:
         writer.writeByte(0);
         break;
-      case TaskType.weekly:
+      case TaskType.recurring:
         writer.writeByte(1);
-        break;
-      case TaskType.monthly:
-        writer.writeByte(2);
         break;
     }
   }

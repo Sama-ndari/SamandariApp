@@ -199,10 +199,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'calendar_fab',
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => const AddEditTaskScreen(),
+              builder: (context) => AddEditTaskScreen(initialDate: _selectedDay),
             ),
           );
         },
@@ -282,7 +283,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           child: Icon(icon, color: color),
         ),
         title: Text(title),
-        subtitle: Text(subtitle),
+        subtitle: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: _buildEventBadge(type),
       ),
     );

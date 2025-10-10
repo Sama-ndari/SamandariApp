@@ -9,8 +9,9 @@ import 'package:samapp/services/task_service.dart';
 
 class AddEditTaskScreen extends StatefulWidget {
   final Task? task;
+  final DateTime? initialDate;
 
-  const AddEditTaskScreen({super.key, this.task});
+  const AddEditTaskScreen({super.key, this.task, this.initialDate});
 
   @override
   State<AddEditTaskScreen> createState() => _AddEditTaskScreenState();
@@ -26,15 +27,17 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
   late DateTime _dueDate;
   late TaskType _taskType;
   late Priority _priority;
+  late String? _recurringPattern;
 
   @override
   void initState() {
     super.initState();
     _title = widget.task?.title ?? '';
     _description = widget.task?.description ?? '';
-    _dueDate = widget.task?.dueDate ?? DateTime.now();
-    _taskType = widget.task?.type ?? TaskType.daily;
+    _dueDate = widget.task?.dueDate ?? widget.initialDate ?? DateTime.now();
+    _taskType = widget.task?.isRecurring ?? false ? TaskType.recurring : TaskType.oneTime;
     _priority = widget.task?.priority ?? Priority.medium;
+    _recurringPattern = widget.task?.recurringPattern;
   }
 
   void _submit() async {
@@ -53,7 +56,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         ..priority = _priority
         ..isCompleted = widget.task?.isCompleted ?? false
         ..createdDate = widget.task?.createdDate ?? DateTime.now()
-        ..assignedDate = widget.task?.assignedDate ?? DateTime.now();
+        ..assignedDate = widget.task?.assignedDate ?? DateTime.now()
+        ..isRecurring = _taskType == TaskType.recurring
+        ..recurringPattern = _taskType == TaskType.recurring ? _recurringPattern : null;
 
       if (widget.task == null) {
         _taskService.addTask(newTask);
@@ -112,8 +117,9 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: ListView(
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
               TextFormField(
                 initialValue: _title,
                 decoration: const InputDecoration(labelText: 'Title'),
@@ -127,8 +133,14 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
               ),
               TextFormField(
                 initialValue: _description,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  alignLabelWithHint: true, // Aligns the label with the top of the field
+                ),
                 onSaved: (value) => _description = value!,
+                minLines: 3, // Set a minimum height
+                maxLines: null, // Allow the field to expand indefinitely
+                keyboardType: TextInputType.multiline, // Optimize keyboard for multi-line input
               ),
               const SizedBox(height: 16),
               Row(
@@ -160,15 +172,41 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 items: TaskType.values.map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text(type.toString().split('.').last),
+                    child: Text(type == TaskType.oneTime ? 'One-Time' : 'Recurring'),
                   );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _taskType = value!;
+                    if (_taskType == TaskType.oneTime) {
+                      _recurringPattern = null;
+                    }
                   });
                 },
               ),
+              if (_taskType == TaskType.recurring)
+                DropdownButtonFormField<String>(
+                  value: _recurringPattern,
+                  hint: const Text('Select Pattern'),
+                  decoration: const InputDecoration(labelText: 'Recurrence Pattern'),
+                  items: ['daily', 'weekly', 'monthly'].map((pattern) {
+                    return DropdownMenuItem(
+                      value: pattern,
+                      child: Text(pattern.substring(0, 1).toUpperCase() + pattern.substring(1)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _recurringPattern = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (_taskType == TaskType.recurring && value == null) {
+                      return 'Please select a recurrence pattern';
+                    }
+                    return null;
+                  },
+                ),
               DropdownButtonFormField<Priority>(
                 value: _priority,
                 decoration: const InputDecoration(labelText: 'Priority'),
@@ -191,7 +229,7 @@ class _AddEditTaskScreenState extends State<AddEditTaskScreen> {
                 isLoading: _isLoading,
                 onPressed: _submit,
               ),
-            ],
+            ]),
           ),
         ),
       ),

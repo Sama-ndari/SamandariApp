@@ -19,7 +19,8 @@ class _AddEditLegacyCapsuleScreenState extends State<AddEditLegacyCapsuleScreen>
   final _formKey = GlobalKey<FormState>();
   final _contentController = TextEditingController();
   final _recipientController = TextEditingController();
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 365)); // Default to one year from now
+  final _emailController = TextEditingController();
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1)); // Default to tomorrow
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -45,6 +46,7 @@ class _AddEditLegacyCapsuleScreenState extends State<AddEditLegacyCapsuleScreen>
         openDate: _selectedDate,
         recipientName: recipientName.isNotEmpty ? recipientName : null,
       );
+      newCapsule.recipientEmail = _emailController.text.trim();
 
       final box = Hive.box<LegacyCapsule>('legacy_capsules');
       box.add(newCapsule);
@@ -145,6 +147,24 @@ class _AddEditLegacyCapsuleScreenState extends State<AddEditLegacyCapsuleScreen>
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Recipient\'s Email (Optional)',
+                  hintText: 'The capsule will be sent here on the open date',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return null; // Optional field
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return 'Please enter a valid email address';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 20),
               ElevatedButton.icon(

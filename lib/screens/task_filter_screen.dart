@@ -103,40 +103,27 @@ class _TaskFilterScreenState extends State<TaskFilterScreen> {
             spacing: 8,
             children: [
               FilterChip(
-                label: const Text('Daily'),
-                selected: _filter.types.contains(TaskType.daily),
+                label: const Text('One-Time'),
+                selected: _filter.types.contains(TaskType.oneTime),
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
-                      _filter.types.add(TaskType.daily);
+                      _filter.types.add(TaskType.oneTime);
                     } else {
-                      _filter.types.remove(TaskType.daily);
+                      _filter.types.remove(TaskType.oneTime);
                     }
                   });
                 },
               ),
               FilterChip(
-                label: const Text('Weekly'),
-                selected: _filter.types.contains(TaskType.weekly),
+                label: const Text('Recurring'),
+                selected: _filter.types.contains(TaskType.recurring),
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
-                      _filter.types.add(TaskType.weekly);
+                      _filter.types.add(TaskType.recurring);
                     } else {
-                      _filter.types.remove(TaskType.weekly);
-                    }
-                  });
-                },
-              ),
-              FilterChip(
-                label: const Text('Monthly'),
-                selected: _filter.types.contains(TaskType.monthly),
-                onSelected: (selected) {
-                  setState(() {
-                    if (selected) {
-                      _filter.types.add(TaskType.monthly);
-                    } else {
-                      _filter.types.remove(TaskType.monthly);
+                      _filter.types.remove(TaskType.recurring);
                     }
                   });
                 },
@@ -175,15 +162,6 @@ class _TaskFilterScreenState extends State<TaskFilterScreen> {
             onChanged: (value) {
               setState(() {
                 _filter.showOverdue = value;
-              });
-            },
-          ),
-          SwitchListTile(
-            title: const Text('Show Recurring'),
-            value: _filter.showRecurring,
-            onChanged: (value) {
-              setState(() {
-                _filter.showRecurring = value;
               });
             },
           ),
@@ -281,7 +259,6 @@ class TaskFilter {
   bool showCompleted = true;
   bool showPending = true;
   bool showOverdue = true;
-  bool showRecurring = true;
   DateTime? startDate;
   DateTime? endDate;
 
@@ -294,7 +271,6 @@ class TaskFilter {
       ..showCompleted = showCompleted
       ..showPending = showPending
       ..showOverdue = showOverdue
-      ..showRecurring = showRecurring
       ..startDate = startDate
       ..endDate = endDate;
   }
@@ -316,7 +292,6 @@ class TaskFilter {
     if (task.dueDate.isBefore(DateTime.now()) && !task.isCompleted && !showOverdue) {
       return false;
     }
-    if (task.isRecurring && !showRecurring) return false;
 
     // Date range filter
     if (startDate != null && task.dueDate.isBefore(startDate!)) {
@@ -335,7 +310,6 @@ class TaskFilter {
         !showCompleted ||
         !showPending ||
         !showOverdue ||
-        !showRecurring ||
         startDate != null ||
         endDate != null;
   }

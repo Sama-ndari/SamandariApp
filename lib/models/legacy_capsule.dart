@@ -23,11 +23,22 @@ class LegacyCapsule extends HiveObject {
   @HiveField(5)
   late bool isOpened;
 
+  @HiveField(6)
+  String? recipientEmail;
+
+  @HiveField(7)
+  bool isRead;
+
+  @HiveField(8)
+  bool isSent = false;
+
   LegacyCapsule({
     required this.content,
     required this.creationDate,
     required this.openDate,
     this.recipientName,
+    this.recipientEmail,
+    this.isRead = false,
   }) {
     id = const Uuid().v4();
     isOpened = false;

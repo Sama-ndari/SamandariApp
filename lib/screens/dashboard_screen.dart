@@ -202,7 +202,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    final names = ['StarK', 'Sam', 'Samandari'];
+    final namesBox = Hive.box<String>('dashboard_names');
+    var names = namesBox.values.toList();
+
+    if (names.isEmpty) {
+      // Populate with default names if the box is empty
+      final defaultNames = ['StarK', 'Sam', 'Samandari'];
+      namesBox.addAll(defaultNames);
+      names = defaultNames;
+    }
+
     final random = Random();
     final name = names[random.nextInt(names.length)];
     

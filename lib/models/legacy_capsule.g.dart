@@ -21,15 +21,18 @@ class LegacyCapsuleAdapter extends TypeAdapter<LegacyCapsule> {
       creationDate: fields[2] as DateTime,
       openDate: fields[3] as DateTime,
       recipientName: fields[4] as String?,
+      recipientEmail: fields[6] as String?,
+      isRead: fields[7] as bool,
     )
       ..id = fields[0] as String
-      ..isOpened = fields[5] as bool;
+      ..isOpened = fields[5] as bool
+      ..isSent = fields[8] as bool;
   }
 
   @override
   void write(BinaryWriter writer, LegacyCapsule obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +44,13 @@ class LegacyCapsuleAdapter extends TypeAdapter<LegacyCapsule> {
       ..writeByte(4)
       ..write(obj.recipientName)
       ..writeByte(5)
-      ..write(obj.isOpened);
+      ..write(obj.isOpened)
+      ..writeByte(6)
+      ..write(obj.recipientEmail)
+      ..writeByte(7)
+      ..write(obj.isRead)
+      ..writeByte(8)
+      ..write(obj.isSent);
   }
 
   @override

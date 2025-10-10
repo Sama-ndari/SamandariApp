@@ -14,27 +14,29 @@ import 'package:samapp/screens/statistics_screen.dart';
 import 'package:samapp/screens/enhanced_analytics_screen.dart';
 import 'package:samapp/screens/calendar_screen.dart';
 import 'package:samapp/screens/global_search_screen.dart';
-import 'package:samapp/screens/notification_settings_screen.dart';
-import 'package:samapp/screens/demo_ui_screen.dart';
+import 'package:samapp/screens/settings_screen.dart';
 import 'package:samapp/screens/pomodoro_screen.dart';
 import 'package:samapp/screens/ai_hub_screen.dart';
 import 'package:samapp/services/hive_service.dart';
 import 'package:samapp/services/notification_service.dart';
 import 'package:samapp/theme/theme.dart';
-import 'package:samapp/services/task_rollover_service.dart';
 import 'package:samapp/services/theme_service.dart';
-import 'package:samapp/services/recurring_task_service.dart';
+import 'package:samapp/services/capsule_check_service.dart';
 import 'package:samapp/services/auto_backup_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:samapp/models/habit.dart';
+import 'package:samapp/models/legacy_capsule.dart';
+import 'package:samapp/services/recurring_task_service.dart';
+import 'package:samapp/services/navigation_service.dart'; // This is the missing import
 import 'package:provider/provider.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:math' as math;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env"); 
   await HiveService.init();
-  await dotenv.load(fileName: ".env");
+  await Hive.openBox<String>('dashboard_names');
   final themeService = ThemeService();
   await themeService.init();
   
@@ -46,6 +48,9 @@ void main() async {
   final autoBackupService = AutoBackupService();
   await autoBackupService.init();
   await autoBackupService.performAutoBackup();
+  
+  // Perform capsule check on startup
+  await CapsuleCheckService().checkAndSendCapsules();
   
   // Initialize notifications
   final notificationService = NotificationService();
@@ -71,6 +76,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeService.themeMode,
+            navigatorKey: NavigationService.navigatorKey, // Assigning the global key
             home: const DashboardScreen(),
           );
         },
@@ -87,13 +93,11 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, TickerProviderStateMixin {
-  final TaskRolloverService _taskRolloverService = TaskRolloverService();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _taskRolloverService.rolloverTasks();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -107,12 +111,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, Ti
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _taskRolloverService.rolloverTasks();
-    }
-  }
 
   int _selectedIndex = 0;
   bool _isMenuOpen = false;
@@ -281,24 +279,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, Ti
                     builder: (context) => const ContactsScreen(),
                   ),
                 );
-              } else if (value == 'backup') {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const BackupRestoreScreen(),
-                  ),
-                );
-              } else if (value == 'notifications') {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationSettingsScreen(),
-                  ),
-                );
-              } else if (value == 'ui_demo') {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const DemoUIScreen(),
-                  ),
-                );
               } else if (value == 'pomodoro') {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -311,6 +291,12 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, Ti
                     builder: (context) => AiHubScreen(),
                   ),
                 );
+              } else if (value == 'settings') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
               } else if (value == 'theme') {
                 Provider.of<ThemeService>(context, listen: false).toggleTheme();
               }
@@ -318,7 +304,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, Ti
             itemBuilder: (BuildContext context) {
               final themeProvider = Provider.of<ThemeService>(context, listen: false);
               return <PopupMenuEntry<String>>[
-                
                 const PopupMenuItem<String>(
                   value: 'contacts',
                   child: ListTile(
@@ -334,31 +319,18 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, Ti
                   ),
                 ),
                 const PopupMenuItem<String>(
-                  value: 'backup',
-                  child: ListTile(
-                    leading: Icon(Icons.backup_outlined),
-                    title: Text('Backup'),
-                  ),
-                ),
-                const PopupMenuItem<String>(
                   value: 'pomodoro',
                   child: ListTile(
                     leading: Icon(Icons.timer_outlined),
                     title: Text('Pomodoro Timer'),
                   ),
                 ),
+                const PopupMenuDivider(),
                 const PopupMenuItem<String>(
-                  value: 'notifications',
+                  value: 'settings',
                   child: ListTile(
-                    leading: Icon(Icons.notifications_none_outlined),
-                    title: Text('Notifications'),
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'ui_demo',
-                  child: ListTile(
-                    leading: Icon(Icons.palette_outlined),
-                    title: Text('UI Widgets Demo'),
+                    leading: Icon(Icons.settings_outlined),
+                    title: Text('Settings'),
                   ),
                 ),
                 PopupMenuItem<String>(

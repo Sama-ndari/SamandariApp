@@ -9,79 +9,77 @@ class RecurringTaskService {
   Future<void> checkAndCreateRecurringTasks() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final allTasks = _taskBox.values.toList();
 
-    for (var task in _taskBox.values) {
-      if (task.isRecurring && task.recurringPattern != null) {
-        final lastRecurred = task.lastRecurredDate ?? task.createdDate;
-        final lastRecurredDate = DateTime(
-          lastRecurred.year,
-          lastRecurred.month,
-          lastRecurred.day,
-        );
+    final recurringTemplates = allTasks.where((t) => t.isRecurring).toList();
 
-        bool shouldCreateNew = false;
+    for (var template in recurringTemplates) {
+      final instances = allTasks
+          .where((t) =>
+              !t.isRecurring &&
+              t.recurringPattern == template.recurringPattern &&
+              t.title == template.title)
+          .toList();
 
-        switch (task.recurringPattern) {
-          case 'daily':
-            shouldCreateNew = today.isAfter(lastRecurredDate);
-            break;
-          case 'weekly':
-            final daysDifference = today.difference(lastRecurredDate).inDays;
-            shouldCreateNew = daysDifference >= 7;
-            break;
-          case 'monthly':
-            shouldCreateNew = today.month != lastRecurredDate.month ||
-                today.year != lastRecurredDate.year;
-            break;
+      if (instances.isEmpty) {
+        // This template has never created an instance. If its start date is today or in the past, create one.
+        if (!template.dueDate.isAfter(today)) {
+           await _createRecurringTaskInstance(template, fromDate: template.dueDate);
         }
+        continue;
+      }
 
-        if (shouldCreateNew) {
-          await _createRecurringTaskInstance(task);
-          task.lastRecurredDate = now;
-          await task.save();
+      instances.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+      Task latestInstance = instances.first;
+      DateTime lastDueDate = latestInstance.dueDate;
+
+      // Only act if the last due date is in the past
+      if (lastDueDate.isBefore(today)) {
+        if (latestInstance.isCompleted) {
+          // If completed, create a new instance for the current period
+          await _createRecurringTaskInstance(template, fromDate: today);
+        } else {
+          // If not completed, roll the existing one over to today
+          latestInstance.dueDate = _calculateNextDueDate(template.recurringPattern, today);
+          await latestInstance.save();
         }
       }
     }
   }
 
-  Future<void> _createRecurringTaskInstance(Task originalTask) async {
-    final now = DateTime.now();
-    DateTime newDueDate;
-
-    switch (originalTask.recurringPattern) {
+  DateTime _calculateNextDueDate(String? pattern, DateTime fromDate) {
+    switch (pattern) {
       case 'daily':
-        final today = DateTime(now.year, now.month, now.day, 23, 59);
-        // If the original due date is in the future, respect it.
-        // Otherwise, set it to today.
-        if (originalTask.dueDate.isAfter(now)) {
-          newDueDate = originalTask.dueDate;
-        } else {
-          newDueDate = today;
-        }
-        break;
+        return DateTime(fromDate.year, fromDate.month, fromDate.day, 23, 59, 59);
       case 'weekly':
-        newDueDate = now.add(const Duration(days: 7));
-        break;
+        return fromDate.add(const Duration(days: 7));
       case 'monthly':
-        newDueDate = DateTime(now.year, now.month + 1, now.day);
-        break;
+        return DateTime(fromDate.year, fromDate.month + 1, fromDate.day);
       default:
-        newDueDate = now;
+        return fromDate;
     }
+  }
+
+  bool isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  Future<void> _createRecurringTaskInstance(Task template, {required DateTime fromDate}) async {
+    final now = DateTime.now();
+    final newDueDate = _calculateNextDueDate(template.recurringPattern, fromDate);
 
     final newTask = Task()
       ..id = _uuid.v4()
-      ..title = originalTask.title
-      ..description = originalTask.description
-      ..type = originalTask.type
-      ..priority = originalTask.priority
+      ..title = template.title
+      ..description = template.description
+      ..type = template.type
+      ..priority = template.priority
       ..isCompleted = false
       ..createdDate = now
       ..dueDate = newDueDate
       ..assignedDate = now
-      ..isRecurring = false // The instance itself is not recurring
-      ..recurringPattern = null
-      ..lastRecurredDate = null;
+      ..isRecurring = false
+      ..recurringPattern = template.recurringPattern; // Keep pattern for identification
 
     await _taskBox.put(newTask.id, newTask);
   }
@@ -92,14 +90,15 @@ class RecurringTaskService {
   ) async {
     task.isRecurring = true;
     task.recurringPattern = pattern;
-    task.lastRecurredDate = DateTime.now();
     await task.save();
+
+    // Immediately create the first visible instance of this task
+    await _createRecurringTaskInstance(task, fromDate: task.dueDate);
   }
 
   Future<void> stopRecurring(Task task) async {
     task.isRecurring = false;
     task.recurringPattern = null;
-    task.lastRecurredDate = null;
     await task.save();
   }
 }

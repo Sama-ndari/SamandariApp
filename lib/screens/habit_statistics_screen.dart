@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:samapp/models/habit.dart';
 import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
-import 'package:samapp/services/habit_streak_service.dart';
-import 'package:intl/intl.dart';
-import 'package:samapp/services/habit_streak_service.dart';
+import 'package:samapp/services/habit_analytics_service.dart';
 import 'package:intl/intl.dart';
 
 class HabitStatisticsScreen extends StatelessWidget {
@@ -13,68 +11,21 @@ class HabitStatisticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final streakService = HabitStreakService();
+    final analytics = HabitAnalytics(habit);
     final isWeekly = habit.frequency == HabitFrequency.timesPerWeek;
     final isSpecificDays = habit.frequency == HabitFrequency.specificDays;
 
-    double totalRate;
-    double monthlyRate;
-    String totalRateLabel = 'Total Rate';
-    String monthlyRateLabel = 'This Month';
+    // Use the new service for all calculations
+    final totalAdherence = analytics.getAdherenceForPeriod(habit.createdAt, DateTime.now());
+    final monthlyAdherence = analytics.getAdherenceForPeriod(
+      DateTime(DateTime.now().year, DateTime.now().month, 1),
+      DateTime.now(),
+    );
 
-    if (isWeekly) {
-      final weeklyCompletions = streakService.groupCompletionsByWeek(habit.completionDates);
-      final target = habit.weeklyTarget ?? 1;
-      double totalPercentage = 0;
-      int totalWeeks = 0;
-
-      DateTime now = DateTime.now();
-      DateTime loopDate = habit.createdAt;
-      while (loopDate.isBefore(now)) {
-        totalWeeks++;
-        // Find the Monday of the week for the current loop date to use as the key
-        final startOfWeek = loopDate.subtract(Duration(days: loopDate.weekday - 1));
-        final weekKey = DateFormat('yyyy-MM-dd').format(startOfWeek);
-        
-        final completions = weeklyCompletions[weekKey]?.length ?? 0;
-        totalPercentage += (completions / target).clamp(0, 1);
-        loopDate = loopDate.add(const Duration(days: 7));
-      }
-      totalRate = totalWeeks > 0 ? (totalPercentage / totalWeeks * 100) : 0.0;
-      totalRateLabel = 'Weekly Success';
-
-      double last4WeeksPercentage = 0;
-      for (int i = 0; i < 4; i++) {
-        final weekStart = now.subtract(Duration(days: now.weekday - 1 + (i * 7)));
-        final weekKey = DateFormat('yyyy-MM-dd').format(weekStart);
-        final completions = weeklyCompletions[weekKey]?.length ?? 0;
-        last4WeeksPercentage += (completions / target).clamp(0, 1);
-      }
-      monthlyRate = (last4WeeksPercentage / 4 * 100);
-      monthlyRateLabel = 'Last 4 Weeks';
-
-    } else if (isSpecificDays) {
-      final targetDaysCount = habit.specificWeekdays?.length ?? 0;
-      final totalTargetDays = _calculateTotalTargetDays(habit.createdAt, habit.specificWeekdays ?? []);
-      totalRate = totalTargetDays > 0 ? (habit.completionDates.length / totalTargetDays * 100) : 0.0;
-      totalRateLabel = 'Overall Adherence';
-
-      final now = DateTime.now();
-      final firstDayOfMonth = DateTime(now.year, now.month, 1);
-      final targetDaysThisMonth = _calculateTotalTargetDays(firstDayOfMonth, habit.specificWeekdays ?? [], now);
-      final completionsThisMonth = habit.completionDates.where((d) => d.month == now.month && d.year == now.year).length;
-      monthlyRate = targetDaysThisMonth > 0 ? (completionsThisMonth / targetDaysThisMonth * 100) : 0.0;
-      monthlyRateLabel = 'Monthly Adherence';
-
-    } else {
-      final totalDays = DateTime.now().difference(habit.createdAt).inDays + 1;
-      totalRate = totalDays > 0 ? (habit.completionDates.length / totalDays * 100) : 0.0;
-
-      final now = DateTime.now();
-      final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-      final completionsThisMonth = habit.completionDates.where((d) => d.month == now.month && d.year == now.year).length;
-      monthlyRate = (completionsThisMonth / daysInMonth * 100);
-    }
+    final totalRate = totalAdherence * 100;
+    final monthlyRate = monthlyAdherence * 100;
+    const totalRateLabel = 'Overall Adherence';
+    const monthlyRateLabel = 'Monthly Adherence';
 
     final datasets = {
       for (var date in habit.completionDates)
@@ -90,12 +41,9 @@ class HabitStatisticsScreen extends StatelessWidget {
         children: [
           _buildStatsRow(context, totalRate, monthlyRate, totalRateLabel, monthlyRateLabel),
           const SizedBox(height: 24),
-          if (isWeekly)
-            _buildWeeklyHeatmap(context, streakService)
-          else if (isSpecificDays)
-            _buildSpecificDaysHistory(context)
-          else
-            _buildHeatMap(context, datasets),
+          _buildHeatMap(context, datasets),
+          if (habit.frequency == HabitFrequency.daily)
+            _buildCompletionHistory(context),
         ],
       ),
     );
@@ -163,89 +111,44 @@ class HabitStatisticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeeklyHeatmap(BuildContext context, HabitStreakService streakService) {
-    final weeklyCompletions = streakService.groupCompletionsByWeek(habit.completionDates);
-    final today = DateTime.now();
-    final startOfThisWeek = today.subtract(Duration(days: today.weekday - 1));
-    final totalWeeksSinceCreation = (today.difference(habit.createdAt).inDays / 7).ceil();
+  Widget _buildCompletionHistory(BuildContext context) {
+    final sortedDates = habit.completionDates.toList()..sort((a, b) => b.compareTo(a));
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Weekly Goal History", style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            ...List.generate(totalWeeksSinceCreation, (weekIndex) { 
-              final weekStart = startOfThisWeek.subtract(Duration(days: weekIndex * 7));
-              if (weekStart.isBefore(habit.createdAt.subtract(const Duration(days: 7)))) return const SizedBox.shrink();
-
-              final weekKey = DateFormat('yyyy-MM-dd').format(weekStart);
-              final completions = weeklyCompletions[weekKey]?.length ?? 0;
-              final target = habit.weeklyTarget ?? 1;
-              final isSuccess = completions >= target;
-
-              return ListTile(
-                leading: Icon(isSuccess ? Icons.check_circle : Icons.cancel, color: isSuccess ? Colors.green : Colors.red),
-                title: Text('Week of ${DateFormat.yMMMd().format(weekStart)}'),
-                trailing: Text('$completions / $target', style: const TextStyle(fontWeight: FontWeight.bold)),
-              );
-            }).reversed.toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  int _calculateTotalTargetDays(DateTime from, List<int> targetWeekdays, [DateTime? to]) {
-    to ??= DateTime.now();
-    int totalDays = 0;
-    
-    DateTime currentDate = from;
-    while (currentDate.isBefore(to.add(const Duration(days: 1)))) {
-        if (targetWeekdays.contains(currentDate.weekday)) {
-            totalDays++;
-        }
-        currentDate = currentDate.add(const Duration(days: 1));
+    if (sortedDates.isEmpty) {
+      return const SizedBox.shrink();
     }
-    return totalDays;
-  }
 
-  Widget _buildSpecificDaysHistory(BuildContext context) {
-    final today = DateTime.now();
-    final totalWeeksSinceCreation = (today.difference(habit.createdAt).inDays / 7).ceil();
-    final startOfThisWeek = today.subtract(Duration(days: today.weekday - 1));
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Weekly Adherence History", style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            ...List.generate(totalWeeksSinceCreation, (weekIndex) {
-              final weekStart = startOfThisWeek.subtract(Duration(days: weekIndex * 7));
-              if (weekStart.isBefore(habit.createdAt.subtract(const Duration(days: 7)))) return const SizedBox.shrink();
-
-              final weekEnd = weekStart.add(const Duration(days: 6));
-              final completionsInWeek = habit.completionDates.where((d) => d.isAfter(weekStart) && d.isBefore(weekEnd)).length;
-              final targetDaysInWeek = habit.specificWeekdays?.length ?? 0;
-
-              return ListTile(
-                leading: Icon(completionsInWeek >= targetDaysInWeek ? Icons.check_circle : Icons.cancel, color: completionsInWeek >= targetDaysInWeek ? Colors.green : Colors.red),
-                title: Text('Week of ${DateFormat.yMMMd().format(weekStart)}'),
-                trailing: Text('$completionsInWeek / $targetDaysInWeek', style: const TextStyle(fontWeight: FontWeight.bold)),
-              );
-            }).reversed.toList(),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Padding(
+          padding: const EdgeInsets.only(left: 4.0),
+          child: Text(
+            'Completion History',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sortedDates.length,
+            itemBuilder: (context, index) {
+              final date = sortedDates[index];
+              return ListTile(
+                leading: const Icon(Icons.check_circle_outline, color: Colors.green),
+                title: Text(DateFormat.yMMMMd().format(date)),
+                trailing: Text(DateFormat.jm().format(date), style: Theme.of(context).textTheme.bodySmall),
+              );
+            },
+            separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+          ),
+        ),
+      ],
     );
   }
 }

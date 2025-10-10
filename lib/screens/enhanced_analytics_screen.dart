@@ -7,6 +7,7 @@ import 'package:samapp/models/habit.dart';
 import 'package:intl/intl.dart';
 import 'package:samapp/utils/money_formatter.dart';
 import 'package:samapp/utils/date_range_utils.dart';
+import 'package:samapp/services/habit_analytics_service.dart';
 
 class EnhancedAnalyticsScreen extends StatefulWidget {
   const EnhancedAnalyticsScreen({super.key});
@@ -45,8 +46,6 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildExpenseTrendChart(),
-            const SizedBox(height: 24),
-            _buildTaskCompletionChart(),
             const SizedBox(height: 24),
             _buildHabitCompletionChart(),
             const SizedBox(height: 24),
@@ -120,119 +119,34 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
     );
   }
 
-  Widget _buildTaskCompletionChart() {
-    final taskBox = Hive.box<Task>('tasks');
-    final dateRange = _getDateRange();
-    final days = dateRange.end.difference(dateRange.start).inDays;
-    final completedData = <FlSpot>[];
-    final createdData = <FlSpot>[];
-
-    for (int i = 0; i < days; i++) {
-      final date = dateRange.start.add(Duration(days: i));
-      final dayStart = DateTime(date.year, date.month, date.day);
-      final dayEnd = dayStart.add(const Duration(days: 1));
-      int completed = 0;
-      int created = 0;
-      for (var task in taskBox.values) {
-        if (task.completedDate != null && task.completedDate!.isAfter(dayStart) && task.completedDate!.isBefore(dayEnd)) {
-          completed++;
-        }
-        if (task.createdDate.isAfter(dayStart) && task.createdDate.isBefore(dayEnd)) {
-          created++;
-        }
-      }
-      completedData.add(FlSpot(i.toDouble(), completed.toDouble()));
-      createdData.add(FlSpot(i.toDouble(), created.toDouble()));
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Task Activity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Row(children: [_buildLegendItem('Completed', Colors.blue), const SizedBox(width: 16), _buildLegendItem('Created', Colors.orange)]),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30)),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          if (value.toInt() % (days ~/ 5) == 0) {
-                            final date = _getDateRange().start.add(Duration(days: value.toInt()));
-                            return Text(DateFormat('MM/dd').format(date), style: const TextStyle(fontSize: 10));
-                          }
-                          return const Text('');
-                        },
-                      ),
-                    ),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  borderData: FlBorderData(show: true),
-                  lineBarsData: [
-                    LineChartBarData(spots: completedData, isCurved: true, color: Colors.blue, barWidth: 3, dotData: FlDotData(show: false)),
-                    LineChartBarData(spots: createdData, isCurved: true, color: Colors.orange, barWidth: 3, dotData: FlDotData(show: false)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  
   Widget _buildHabitCompletionChart() {
     final habitBox = Hive.box<Habit>('habits');
+    if (habitBox.values.isEmpty) return const SizedBox.shrink();
+
     final dateRange = _getDateRange();
     final days = dateRange.end.difference(dateRange.start).inDays;
+    if (days < 0) return const SizedBox.shrink();
+
     final data = <FlSpot>[];
 
-    for (int i = 0; i < days; i++) {
+    for (int i = 0; i <= days; i++) {
       final date = dateRange.start.add(Duration(days: i));
-      int actualCompletions = 0;
-      int expectedCompletions = 0;
+      double cumulativeAdherence = 0;
+      int habitCount = 0;
 
       for (var habit in habitBox.values) {
-        bool wasDue = false;
-        switch (habit.frequency) {
-          case HabitFrequency.daily:
-            wasDue = true;
-            break;
-          case HabitFrequency.specificDays:
-            if (habit.specificWeekdays?.contains(date.weekday) ?? false) {
-              wasDue = true;
-            }
-            break;
-          case HabitFrequency.timesPerWeek:
-            // This logic is complex for a daily chart, so we'll approximate
-            // by distributing the weekly target across the week.
-            if (habit.weeklyTarget != null) {
-              expectedCompletions += (habit.weeklyTarget! / 7).round();
-            }
-            break;
-        }
-
-        if (wasDue) {
-          expectedCompletions++;
-        }
-
-        if (habit.completionDates.any((d) => d.year == date.year && d.month == date.month && d.day == date.day)) {
-          actualCompletions++;
-        }
+        final analytics = HabitAnalytics(habit);
+        // THIS IS THE KEY LINE:
+        // It calculates adherence from the habit's creation date up to the current day on the chart.
+        final adherenceForDate = analytics.getAdherenceForPeriod(habit.createdAt, date);
+        cumulativeAdherence += adherenceForDate;
+        habitCount++;
       }
 
-      final double adherenceRate = expectedCompletions > 0 ? (actualCompletions / expectedCompletions) * 100 : 0.0;
-      data.add(FlSpot(i.toDouble(), adherenceRate.clamp(0, 100))); // Clamp to handle over-completion
+      // The average of all habits' cumulative adherence up to that day.
+      final avgAdherence = habitCount > 0 ? (cumulativeAdherence / habitCount) * 100 : 0.0;
+      data.add(FlSpot(i.toDouble(), avgAdherence.clamp(0, 100)));
     }
 
     return Card(
@@ -307,12 +221,37 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
 
     final taskBox = Hive.box<Task>('tasks');
     final expenseBox = Hive.box<Expense>('expenses');
+    final habitBox = Hive.box<Habit>('habits');
 
     final currentTasks = taskBox.values.where((t) => t.completedDate != null && currentPeriod.contains(t.completedDate!)).length;
     final previousTasks = taskBox.values.where((t) => t.completedDate != null && previousPeriod.contains(t.completedDate!)).length;
 
     final currentExpenses = expenseBox.values.where((e) => currentPeriod.contains(e.date)).fold<double>(0, (sum, e) => sum + e.amount);
     final previousExpenses = expenseBox.values.where((e) => previousPeriod.contains(e.date)).fold<double>(0, (sum, e) => sum + e.amount);
+
+    double currentHabitAdherence = 0;
+    double previousHabitAdherence = 0;
+    int currentHabitCount = 0;
+    int previousHabitCount = 0;
+
+    for (var habit in habitBox.values) {
+      final analytics = HabitAnalytics(habit);
+      final currentAdherence = analytics.getAdherenceForPeriod(currentPeriod.start, currentPeriod.end);
+      if (currentAdherence > 0) {
+        currentHabitAdherence += currentAdherence;
+        currentHabitCount++;
+      }
+
+      final previousAdherence = analytics.getAdherenceForPeriod(previousPeriod.start, previousPeriod.end);
+      if (previousAdherence > 0) {
+        previousHabitAdherence += previousAdherence;
+        previousHabitCount++;
+      }
+    }
+
+    final avgCurrentAdherence = currentHabitCount > 0 ? (currentHabitAdherence / currentHabitCount) * 100 : 0.0;
+    final avgPreviousAdherence = previousHabitCount > 0 ? (previousHabitAdherence / previousHabitCount) * 100 : 0.0;
+
 
     return Card(
       child: Padding(
@@ -324,6 +263,8 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
             const SizedBox(height: 16),
             _buildComparisonRow('Tasks Completed', currentTasks.toDouble(), previousTasks.toDouble(), Icons.check_circle, Colors.blue),
             const Divider(),
+             _buildComparisonRow('Habit Adherence', avgCurrentAdherence, avgPreviousAdherence, Icons.repeat, Colors.purple, isPercentage: true),
+            const Divider(),
             _buildComparisonRow('Expenses', currentExpenses, previousExpenses, Icons.attach_money, Colors.green, isMoney: true),
           ],
         ),
@@ -331,7 +272,7 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
     );
   }
 
-  Widget _buildComparisonRow(String label, double current, double previous, IconData icon, Color color, {bool isMoney = false}) {
+  Widget _buildComparisonRow(String label, double current, double previous, IconData icon, Color color, {bool isMoney = false, bool isPercentage = false}) {
     final difference = current - previous;
     final isPositive = difference >= 0;
     final percentChange = previous == 0 ? (current > 0 ? 100.0 : 0.0) : (difference / previous * 100).abs();
@@ -347,7 +288,7 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text('Current: ${isMoney ? formatMoney(current) : current.toInt()}', style: TextStyle(color: Colors.grey[600])),
+                Text('Current: ${isMoney ? formatMoney(current) : (isPercentage ? '${current.toStringAsFixed(0)}%' : current.toInt())}', style: TextStyle(color: Colors.grey[600])),
               ],
             ),
           ),
@@ -360,7 +301,7 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
                   Text('${percentChange.toStringAsFixed(0)}%', style: TextStyle(color: isPositive ? Colors.green : Colors.red, fontWeight: FontWeight.bold)),
                 ],
               ),
-              Text('Previous: ${isMoney ? formatMoney(previous) : previous.toInt()}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              Text('Previous: ${isMoney ? formatMoney(previous) : (isPercentage ? '${previous.toStringAsFixed(0)}%' : previous.toInt())}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             ],
           ),
         ],

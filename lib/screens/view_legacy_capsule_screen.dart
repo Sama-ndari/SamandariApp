@@ -7,6 +7,23 @@ class ViewLegacyCapsuleScreen extends StatelessWidget {
 
   const ViewLegacyCapsuleScreen({super.key, required this.capsule});
 
+  Widget _buildRecipientInfo(BuildContext context, String label, String value, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 16, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Text(
+            '$label $value',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,6 +51,12 @@ class ViewLegacyCapsuleScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
+              if (capsule.recipientName != null && capsule.recipientName!.isNotEmpty)
+                _buildRecipientInfo(context, 'Sent to:', capsule.recipientName!, Icons.person),
+              if (capsule.recipientEmail != null && capsule.recipientEmail!.isNotEmpty)
+                _buildRecipientInfo(context, 'Recipient Email:', capsule.recipientEmail!, Icons.email),
+              if ((capsule.recipientName != null && capsule.recipientName!.isNotEmpty) || (capsule.recipientEmail != null && capsule.recipientEmail!.isNotEmpty))
+                const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(

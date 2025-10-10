@@ -5,14 +5,26 @@ import 'package:samapp/screens/add_edit_legacy_capsule_screen.dart';
 import 'package:samapp/screens/view_legacy_capsule_screen.dart';
 import 'package:intl/intl.dart';
 
-class LegacyCapsuleListScreen extends StatelessWidget {
+class LegacyCapsuleListScreen extends StatefulWidget {
   const LegacyCapsuleListScreen({super.key});
 
+  @override
+  State<LegacyCapsuleListScreen> createState() => _LegacyCapsuleListScreenState();
+}
+
+class _LegacyCapsuleListScreenState extends State<LegacyCapsuleListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Legacy Capsules'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_sweep, color: Colors.redAccent),
+            tooltip: 'Delete Read Capsules',
+            onPressed: () => _showDeleteReadConfirmation(),
+          ),
+        ],
       ),
       body: ValueListenableBuilder(
         valueListenable: Hive.box<LegacyCapsule>('legacy_capsules').listenable(),
@@ -49,11 +61,17 @@ class LegacyCapsuleListScreen extends StatelessWidget {
                     isLocked 
                       ? 'Locked until ${DateFormat.yMMMd().format(capsule.openDate)}'
                       : 'Capsule from ${DateFormat.yMMMd().format(capsule.creationDate)}',
+                    style: TextStyle(fontWeight: capsule.isRead ? FontWeight.normal : FontWeight.bold),
                   ),
-                  subtitle: Text(isLocked ? 'A message awaits...' : 'Ready to open!'),
-                  trailing: const Icon(Icons.chevron_right),
+                  subtitle: Text(isLocked ? 'A message awaits...' : 'Ready to open!', style: TextStyle(color: capsule.isRead ? Colors.grey : null)),
+                  trailing: capsule.isRead ? const Icon(Icons.visibility_off, color: Colors.grey, size: 20) : const Icon(Icons.chevron_right),
                   onTap: () {
                     if (!isLocked) {
+                      // Mark as read when opened
+                      if (!capsule.isRead) {
+                        capsule.isRead = true;
+                        capsule.save();
+                      }
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => ViewLegacyCapsuleScreen(capsule: capsule),
@@ -77,6 +95,36 @@ class LegacyCapsuleListScreen extends StatelessWidget {
         },
         tooltip: 'Create Capsule',
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _showDeleteReadConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Read Capsules?'),
+        content: const Text('This will permanently delete all capsules that you have already opened. Are you sure?'),
+        actions: [
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          TextButton(
+            child: Text('Delete', style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              final box = Hive.box<LegacyCapsule>('legacy_capsules');
+              final readCapsules = box.values.where((c) => c.isRead).toList();
+              for (var capsule in readCapsules) {
+                capsule.delete();
+              }
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${readCapsules.length} read capsules deleted.')),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

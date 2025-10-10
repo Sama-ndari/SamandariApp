@@ -5,11 +5,9 @@ part 'task.g.dart';
 @HiveType(typeId: 0)
 enum TaskType {
   @HiveField(0)
-  daily,
-  @HiveField(1)
-  weekly,
-  @HiveField(2)
-  monthly
+  oneTime,
+  @HiveField(1) 
+  recurring
 }
 
 @HiveType(typeId: 1)
