@@ -9,7 +9,7 @@ import 'package:samapp/services/ai_hub/mission_service.dart';
 import 'package:samapp/services/ai_hub/muse_service.dart';
 import 'package:samapp/services/ai_hub/challenge_service.dart';
 import 'package:samapp/services/ai_hub/legacy_capsule_service.dart';
-import 'package:samapp/services/ai_hub/voice_assistant_service.dart';
+import 'package:samapp/screens/ai_hub/ai_chat_screen.dart';
 import 'package:samapp/services/ai_hub/life_coach_service.dart';
 
 class AiHubScreen extends StatefulWidget {
@@ -25,7 +25,6 @@ class _AiHubScreenState extends State<AiHubScreen> {
   final MuseService _museService = MuseService();
   final ChallengeService _challengeService = ChallengeService();
   final LegacyCapsuleService _legacyCapsuleService = LegacyCapsuleService();
-  final VoiceAssistantService _voiceAssistantService = VoiceAssistantService();
   final LifeCoachService _lifeCoachService = LifeCoachService();
 
   @override
@@ -41,7 +40,11 @@ class _AiHubScreenState extends State<AiHubScreen> {
             icon: Icons.mic,
             title: 'Voice Assistant / Chatbot',
             description: 'Your AI buddy that talks with your stored data.',
-            onTap: () => _voiceAssistantService.showComingSoon(context),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const AiChatScreen()),
+              );
+            },
           ),
           _FeatureCard(
             icon: Icons.psychology,

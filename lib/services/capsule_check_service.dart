@@ -21,11 +21,16 @@ class CapsuleCheckService {
     if (capsulesToSend.isNotEmpty) {
       print('Found ${capsulesToSend.length} capsule(s) to send.');
       for (var capsule in capsulesToSend) {
-        bool success = await _emailService.sendCapsuleEmail(capsule);
-        if (success) {
-          capsule.isSent = true;
-          await capsule.save();
-          print('Successfully sent capsule ${capsule.id} and marked as sent.');
+        try {
+          bool success = await _emailService.sendCapsuleEmail(capsule);
+          if (success) {
+            capsule.isSent = true;
+            await capsule.save();
+            print('Successfully sent capsule ${capsule.id} and marked as sent.');
+          }
+        } catch (e) {
+          print('Failed to send capsule ${capsule.id}: $e');
+          // The app will no longer freeze. It will retry next time.
         }
       }
     } else {

@@ -30,7 +30,7 @@ class LegacyCapsule extends HiveObject {
   bool isRead;
 
   @HiveField(8)
-  bool isSent = false;
+  bool isSent;
 
   LegacyCapsule({
     required this.content,
@@ -39,6 +39,7 @@ class LegacyCapsule extends HiveObject {
     this.recipientName,
     this.recipientEmail,
     this.isRead = false,
+    this.isSent = false,
   }) {
     id = const Uuid().v4();
     isOpened = false;

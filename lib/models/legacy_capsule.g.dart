@@ -23,10 +23,10 @@ class LegacyCapsuleAdapter extends TypeAdapter<LegacyCapsule> {
       recipientName: fields[4] as String?,
       recipientEmail: fields[6] as String?,
       isRead: fields[7] as bool,
+      isSent: fields[8] as bool,
     )
       ..id = fields[0] as String
-      ..isOpened = fields[5] as bool
-      ..isSent = fields[8] as bool;
+      ..isOpened = fields[5] as bool;
   }
 
   @override
