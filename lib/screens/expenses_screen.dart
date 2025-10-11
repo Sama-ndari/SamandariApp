@@ -21,6 +21,13 @@ class ExpensesScreen extends StatefulWidget {
 enum ExpenseViewMode { daily, weekly, monthly, total }
 
 class _ExpensesScreenState extends State<ExpensesScreen> {
+  String _formatCategoryName(ExpenseCategory category) {
+    String name = category.toString().split('.').last;
+    // Handle camelCase by inserting a space before capital letters
+    name = name.replaceAllMapped(RegExp(r'(?<=[a-z])[A-Z]'), (match) => ' ${match.group(0)}');
+    return name[0].toUpperCase() + name.substring(1);
+  }
+
   final ExpenseService _expenseService = ExpenseService();
   DateTime _selectedDate = DateTime.now();
   ExpenseViewMode _viewMode = ExpenseViewMode.daily;
@@ -471,8 +478,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: spendingByCategory.entries.map((entry) {
-              final categoryName = entry.key.toString().split('.').last;
-              final formattedName = '${categoryName.substring(0, 1).toUpperCase()}${categoryName.substring(1)}';
+              final formattedName = _formatCategoryName(entry.key);
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -573,6 +579,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         return Colors.amber;
       case ExpenseCategory.family:
         return Colors.brown;
+      case ExpenseCategory.personalCare:
+        return Colors.lightBlue;
+      case ExpenseCategory.lifestyle:
+        return Colors.indigo;
       case ExpenseCategory.other:
       default:
         return Colors.grey;
@@ -601,6 +611,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         return Icons.people;
       case ExpenseCategory.family:
         return Icons.family_restroom;
+      case ExpenseCategory.personalCare:
+        return Icons.spa;
+      case ExpenseCategory.lifestyle:
+        return Icons.nightlife;
       case ExpenseCategory.other:
       default:
         return Icons.money;

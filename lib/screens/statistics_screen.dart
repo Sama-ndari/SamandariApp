@@ -272,12 +272,19 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         return Colors.amber;
       case ExpenseCategory.family:
         return Colors.brown;
+      case ExpenseCategory.personalCare:
+        return Colors.lightBlue;
+      case ExpenseCategory.lifestyle:
+        return Colors.indigo;
       case ExpenseCategory.other:
         return Colors.grey;
     }
   }
 
   String _getCategoryName(ExpenseCategory category) {
-    return category.name[0].toUpperCase() + category.name.substring(1);
+    String name = category.toString().split('.').last;
+    // Handle camelCase by inserting a space before capital letters
+    name = name.replaceAllMapped(RegExp(r'(?<=[a-z])[A-Z]'), (match) => ' ${match.group(0)}');
+    return name[0].toUpperCase() + name.substring(1);
   }
 }

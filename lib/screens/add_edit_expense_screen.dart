@@ -13,6 +13,13 @@ class AddEditExpenseScreen extends StatefulWidget {
 }
 
 class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
+  String _formatCategoryName(ExpenseCategory category) {
+    String name = category.toString().split('.').last;
+    // Handle camelCase by inserting a space before capital letters
+    name = name.replaceAllMapped(RegExp(r'(?<=[a-z])[A-Z]'), (match) => ' ${match.group(0)}');
+    return name[0].toUpperCase() + name.substring(1);
+  }
+
   final _formKey = GlobalKey<FormState>();
   final _expenseService = ExpenseService();
 
@@ -121,7 +128,7 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
                 items: ExpenseCategory.values.map((category) {
                   return DropdownMenuItem(
                     value: category,
-                    child: Text(category.toString().split('.').last[0].toUpperCase() + category.toString().split('.').last.substring(1)),
+                    child: Text(_formatCategoryName(category)),
                   );
                 }).toList(),
                 onChanged: (value) {

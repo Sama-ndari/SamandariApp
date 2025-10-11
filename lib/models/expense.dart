@@ -25,7 +25,11 @@ enum ExpenseCategory {
   @HiveField(9)
   family,
   @HiveField(10)
-  other
+  other,
+  @HiveField(11)
+  personalCare,
+  @HiveField(12)
+  lifestyle
 }
 
 @HiveType(typeId: 4)

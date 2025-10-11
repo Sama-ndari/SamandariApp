@@ -15,6 +15,7 @@ class CapsuleCheckService {
       print('No internet connection. Skipping email sending check.');
       return; // Stop if offline
     }
+    //
 
     final box = Hive.box<LegacyCapsule>('legacy_capsules');
     final now = DateTime.now();

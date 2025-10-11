@@ -83,6 +83,10 @@ class ExpenseCategoryAdapter extends TypeAdapter<ExpenseCategory> {
         return ExpenseCategory.family;
       case 10:
         return ExpenseCategory.other;
+      case 11:
+        return ExpenseCategory.personalCare;
+      case 12:
+        return ExpenseCategory.lifestyle;
       default:
         return ExpenseCategory.food;
     }
@@ -123,6 +127,12 @@ class ExpenseCategoryAdapter extends TypeAdapter<ExpenseCategory> {
         break;
       case ExpenseCategory.other:
         writer.writeByte(10);
+        break;
+      case ExpenseCategory.personalCare:
+        writer.writeByte(11);
+        break;
+      case ExpenseCategory.lifestyle:
+        writer.writeByte(12);
         break;
     }
   }

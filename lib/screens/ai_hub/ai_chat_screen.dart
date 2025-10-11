@@ -151,10 +151,13 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back),
-        //   onPressed: () => Navigator.of(context).pop(),
-        // ),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu), // Menu button is now here
+            onPressed: () => Scaffold.of(context).openDrawer(),
+            tooltip: 'Chat History',
+          ),
+        ),
         title: Text(_currentConversation?.title ?? 'AI Assistant'),
         actions: [
           Container(
@@ -191,6 +194,11 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
                 ),
               ),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close), // New back button icon
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Close',
           ),
           IconButton(
             icon: Icon(_isTtsEnabled ? Icons.volume_up : Icons.volume_off),
