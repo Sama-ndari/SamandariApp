@@ -49,6 +49,8 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
             const SizedBox(height: 24),
             _buildHabitCompletionChart(),
             const SizedBox(height: 24),
+            _buildTaskTrendChart(),
+            const SizedBox(height: 24),
             _buildComparisonCard(),
           ],
         ),
@@ -316,6 +318,69 @@ class _EnhancedAnalyticsScreenState extends State<EnhancedAnalyticsScreen> {
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
+    );
+  }
+
+  Widget _buildTaskTrendChart() {
+    final taskBox = Hive.box<Task>('tasks');
+    final dateRange = _getDateRange();
+    final days = dateRange.end.difference(dateRange.start).inDays;
+    final data = <FlSpot>[];
+
+    for (int i = 0; i < days; i++) {
+      final date = dateRange.start.add(Duration(days: i));
+      final dayStart = DateTime(date.year, date.month, date.day);
+      final dayEnd = dayStart.add(const Duration(days: 1));
+
+      int tasksCompleted = 0;
+      for (var task in taskBox.values) {
+        if (task.completedDate != null && task.completedDate!.isAfter(dayStart) && task.completedDate!.isBefore(dayEnd)) {
+          tasksCompleted++;
+        }
+      }
+      data.add(FlSpot(i.toDouble(), tasksCompleted.toDouble()));
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Task Completion Trend', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28, getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 10)))),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, meta) {
+                          if (value.toInt() % (days ~/ 5) == 0) {
+                            final date = _getDateRange().start.add(Duration(days: value.toInt()));
+                            return Text(DateFormat('MM/dd').format(date), style: const TextStyle(fontSize: 10));
+                          }
+                          return const Text('');
+                        },
+                      ),
+                    ),
+                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: true),
+                  lineBarsData: [
+                    LineChartBarData(spots: data, isCurved: true, color: Colors.blue, barWidth: 3, dotData: FlDotData(show: false), belowBarData: BarAreaData(show: true, color: Colors.blue.withOpacity(0.1))),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

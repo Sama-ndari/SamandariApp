@@ -78,40 +78,57 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
               children: [
                 Expanded(
                   child: Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+                      child: Row(
                         children: [
-                          const Icon(Icons.local_fire_department, color: Colors.orange, size: 32),
-                          const SizedBox(height: 8),
-                          Text(
-                            habit.frequency == HabitFrequency.timesPerWeek 
-                              ? '${_streakService.getCurrentWeeklyStreak(habit)}'
-                              : '${habit.currentStreak}', 
-                            style: Theme.of(context).textTheme.headlineMedium
+                          Icon(Icons.local_fire_department, color: Colors.orange, size: 36),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                habit.frequency == HabitFrequency.timesPerWeek 
+                                  ? '${_streakService.getCurrentWeeklyStreak(habit)}'
+                                  : '${habit.currentStreak}', 
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                habit.frequency == HabitFrequency.timesPerWeek ? 'Weekly Streak' : 'Current Streak',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
                           ),
-                          Text(habit.frequency == HabitFrequency.timesPerWeek ? 'Current Weekly Streak' : 'Current Streak'),
                         ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+                      child: Row(
                         children: [
-                          const Icon(Icons.emoji_events, color: Colors.amber, size: 32),
-                          const SizedBox(height: 8),
-                          Text(
-                            habit.frequency == HabitFrequency.timesPerWeek
-                              ? '${_streakService.getLongestWeeklyStreak(habit)}'
-                              : '${habit.longestStreak}',
-                            style: Theme.of(context).textTheme.headlineMedium
+                          Icon(Icons.emoji_events, color: Colors.amber, size: 36),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                habit.frequency == HabitFrequency.timesPerWeek
+                                  ? '${_streakService.getLongestWeeklyStreak(habit)}'
+                                  : '${habit.longestStreak}',
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              Text('Best Streak', style: Theme.of(context).textTheme.bodyMedium),
+                            ],
                           ),
-                          const Text('Best Streak'),
                         ],
                       ),
                     ),
@@ -201,16 +218,21 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
               ),
             );
           } else if (day.isBefore(todayWithoutTime)) {
+            // For missed days, show a faded red circle and text
             return Center(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Text(
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
                     '${day.day}',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: Colors.red.withOpacity(0.7)),
                   ),
-                  const Icon(Icons.close, color: Colors.red, size: 32),
-                ],
+                ),
               ),
             );
           }

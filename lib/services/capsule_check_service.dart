@@ -1,12 +1,21 @@
 import 'package:hive/hive.dart';
 import 'package:samapp/models/legacy_capsule.dart';
 import 'package:samapp/services/email_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class CapsuleCheckService {
   final EmailService _emailService = EmailService();
 
   Future<void> checkAndSendCapsules() async {
     print('Checking for unlocked capsules to send...');
+
+    // 1. Check for internet connection first
+    final connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      print('No internet connection. Skipping email sending check.');
+      return; // Stop if offline
+    }
+
     final box = Hive.box<LegacyCapsule>('legacy_capsules');
     final now = DateTime.now();
 
