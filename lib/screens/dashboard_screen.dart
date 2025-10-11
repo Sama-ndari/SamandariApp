@@ -17,6 +17,7 @@ import 'package:samapp/utils/money_formatter.dart';
 import 'package:samapp/main.dart';
 import 'dart:math';
 import 'package:samapp/widgets/daily_inspiration_widget.dart';
+import 'package:samapp/screens/add_edit_journal_entry_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -116,18 +117,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _buildQuickActionItem(
                         context,
                         width: buttonWidth,
-                        icon: Icons.add_task,
-                        label: 'Task',
-                        color: Colors.blue,
-                        delay: 100,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const AddEditTaskScreen()),
-                        ),
-                      ),
-                      _buildQuickActionItem(
-                        context,
-                        width: buttonWidth,
                         icon: Icons.attach_money,
                         label: 'Expense',
                         color: Colors.green,
@@ -140,10 +129,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _buildQuickActionItem(
                         context,
                         width: buttonWidth,
+                        icon: Icons.edit_note,
+                        label: 'Journal',
+                        color: Colors.orange,
+                        delay: 300,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AddEditJournalEntryScreen()),
+                        ),
+                      ),
+                      _buildQuickActionItem(
+                        context,
+                        width: buttonWidth,
                         icon: Icons.auto_awesome,
                         label: 'AI Hub',
                         color: Colors.purple,
-                        delay: 500,
+                        delay: 400,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const AiHubScreen()),
@@ -155,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         icon: Icons.timer,
                         label: 'Focus',
                         color: Colors.red,
-                        delay: 400,
+                        delay: 500,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const PomodoroScreen()),
@@ -233,38 +234,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }).toList();
         final completedToday = todayTasks.where((t) => t.isCompleted).length;
 
-        return Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.check_circle_outline, color: Colors.blue, size: 32),
-                const SizedBox(height: 12),
-                Text(
-                  'Tasks',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$completedToday/${todayTasks.length}',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                if (todayTasks.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: completedToday / todayTasks.length,
-                      backgroundColor: Colors.blue.withOpacity(0.2),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-                      minHeight: 6,
-                    ),
+        return InkWell(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const AddEditTaskScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.add_task, color: Colors.blue, size: 32),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Tasks',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$completedToday/${todayTasks.length}',
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  if (todayTasks.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: todayTasks.isEmpty ? 0 : completedToday / todayTasks.length,
+                        backgroundColor: Colors.blue.withOpacity(0.2),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         );

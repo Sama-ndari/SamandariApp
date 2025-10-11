@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:samapp/models/journal_entry.dart';
 import 'package:samapp/services/journal_service.dart';
+import 'package:samapp/services/ai_hub/journal_prompt_service.dart';
 
 class AddEditJournalEntryScreen extends StatefulWidget {
   final JournalEntry? entry;
@@ -14,17 +15,61 @@ class AddEditJournalEntryScreen extends StatefulWidget {
 class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _journalService = JournalService();
+  final _promptService = JournalPromptService();
+  late TextEditingController _contentController;
 
-  late String _content;
+  String _currentPrompt = '';
+  bool _isLoadingPrompt = false;
+
   late Mood _mood;
   late List<String> _tags;
 
   @override
   void initState() {
     super.initState();
-    _content = widget.entry?.content ?? '';
+    _contentController = TextEditingController(text: widget.entry?.content ?? '');
     _mood = widget.entry?.mood ?? Mood.neutral;
     _tags = widget.entry?.tags ?? [];
+    _loadInitialPrompt();
+  }
+
+  @override
+  void dispose() {
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  void _loadInitialPrompt() {
+    setState(() {
+      _currentPrompt = _promptService.getStaticPrompt();
+    });
+  }
+
+  void _getNewStaticPrompt() {
+    setState(() {
+      _currentPrompt = _promptService.getStaticPrompt();
+    });
+  }
+
+  Future<void> _getNewDynamicPrompt() async {
+    setState(() {
+      _isLoadingPrompt = true;
+    });
+
+    try {
+      final prompt = await _promptService.getDynamicPrompt();
+      setState(() {
+        _currentPrompt = prompt;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not get a new prompt. Please try again.')),
+      );
+    } finally {
+      setState(() {
+        _isLoadingPrompt = false;
+      });
+    }
   }
 
   void _submit() {
@@ -32,7 +77,7 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
       _formKey.currentState!.save();
       final newEntry = JournalEntry()
         ..id = widget.entry?.id ?? ''
-        ..content = _content
+        ..content = _contentController.text
         ..mood = _mood
         ..tags = _tags
         ..date = widget.entry?.date ?? DateTime.now();
@@ -87,9 +132,15 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              _buildPromptDisplay(),
+              const SizedBox(height: 16),
               TextFormField(
-                initialValue: _content,
-                decoration: const InputDecoration(labelText: 'Content'),
+                controller: _contentController,
+                decoration: const InputDecoration(
+                  labelText: 'Your Thoughts',
+                  alignLabelWithHint: true,
+                  border: OutlineInputBorder(),
+                ),
                 maxLines: 10,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -97,7 +148,6 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
                   }
                   return null;
                 },
-                onSaved: (value) => _content = value!,
               ),
               const SizedBox(height: 24),
               const Text(
@@ -161,6 +211,50 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPromptDisplay() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.lightbulb_outline, color: colorScheme.primary, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _currentPrompt,
+              style: theme.textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _isLoadingPrompt
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5))
+              : Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.shuffle, color: colorScheme.secondary),
+                      tooltip: 'Get a static prompt',
+                      onPressed: _getNewStaticPrompt,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.refresh, color: colorScheme.primary),
+                      tooltip: 'Get an AI-powered prompt',
+                      onPressed: _getNewDynamicPrompt,
+                    ),
+                  ],
+                ),
+        ],
       ),
     );
   }

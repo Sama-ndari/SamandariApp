@@ -1,0 +1,73 @@
+const List<String> staticJournalPrompts = [
+  // 🌻 Original Prompts
+  'What was the highlight of your day, and why?',
+  'Describe a small moment of joy you experienced recently.',
+  'What is something you are proud of accomplishing this week?',
+  'If you could give your past self one piece of advice, what would it be?',
+  'What is a challenge you are currently facing, and how are you approaching it?',
+  'Describe a person who has positively influenced you and what they taught you.',
+  'What is one thing you can do tomorrow to bring you closer to your goals?',
+  'Write about a place where you feel completely at peace.',
+  'What is a fear you would like to overcome?',
+  'Describe a simple pleasure that you often take for granted.',
+
+  // 🌅 Self-Reflection & Growth
+  'What’s one thing you’ve learned about yourself recently?',
+  'How do you define success for yourself right now?',
+  'When was the last time you felt truly proud of yourself?',
+  'What are your top three priorities this month?',
+  'How do you usually handle setbacks, and how could you improve that?',
+  'What personal habit has changed your life for the better?',
+  'Who are you becoming, and what choices are shaping that transformation?',
+  'What limiting belief do you need to let go of?',
+  'What does “balance” look like for you these days?',
+  'What motivates you when things get hard?',
+
+  // 💫 Gratitude & Positivity
+  'What are three things you’re grateful for right now?',
+  'Who made you smile today, and why?',
+  'What’s a small win you can celebrate today?',
+  'What’s something in your daily routine that brings you comfort?',
+  'What song, smell, or taste always lifts your mood?',
+  'When was the last time you felt deep peace?',
+  'What are you taking for granted that deserves appreciation?',
+  'What’s a memory that never fails to make you smile?',
+  'Who deserves a thank-you note from you right now?',
+  'What is something beautiful you noticed today?',
+
+  // 🔥 Challenge & Resilience
+  'What was your biggest challenge this week, and how did you handle it?',
+  'How do you recover after a tough day?',
+  'What does courage mean to you?',
+  'Describe a time you failed but learned something valuable.',
+  'What fear is holding you back from the next level?',
+  'When did you last step outside your comfort zone?',
+  'What’s one risk you wish you’d taken sooner?',
+  'What keeps you grounded when life gets chaotic?',
+  'What is one thing you need to forgive yourself for?',
+  'How have you grown from a painful experience?',
+
+  // 💭 Creativity & Imagination
+  'If your life were a movie, what would this chapter be called?',
+  'What would you do if money wasn’t an issue at all?',
+  'Describe your dream morning routine.',
+  'What’s your ideal life five years from now — and how does it feel?',
+  'If you could relive one day with full awareness, which would it be?',
+  'What kind of world do you want to help build?',
+  'If you could master any skill overnight, what would it be?',
+  'What advice would your future self give you?',
+  'If you had a personal motto, what would it be?',
+  'What does “home” mean to you?',
+
+  // 💌 Connection & Relationships
+  'Who has shaped your worldview the most?',
+  'When was the last time you truly listened to someone?',
+  'What relationships in your life need more attention?',
+  'What does love look like to you?',
+  'How do you show care for others?',
+  'What boundaries do you need to set to protect your peace?',
+  'Who has been there for you when you didn’t expect it?',
+  'What qualities do you value most in a friend?',
+  'How do you support others — and how do you let them support you?',
+  'What kind of person do you want to be remembered as?',
+];

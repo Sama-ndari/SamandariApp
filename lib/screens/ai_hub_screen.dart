@@ -47,7 +47,7 @@ class _AiHubScreenState extends State<AiHubScreen> {
             icon: Icons.psychology,
             title: 'AI Life Coach / Therapist',
             description: 'Trained on your own journal data to reflect your patterns back to you.',
-            onTap: () => _lifeCoachService.showComingSoon(context),
+            onTap: () => _lifeCoachService.getReflection(context),
           ),
           _FeatureCard(
             icon: Icons.explore,
