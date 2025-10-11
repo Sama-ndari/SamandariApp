@@ -4,7 +4,11 @@ import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:samapp/services/ai_hub/ai_chat_service.dart';
 
-class ChatMessage {
+import 'package:samapp/services/ai_hub/ai_chat_history_service.dart';
+import 'package:samapp/models/ai_chat/conversation.dart';
+import 'package:samapp/models/ai_chat/chat_message.dart' as model;
+
+class ChatMessage { // This is a view model, different from the Hive model
   final String text;
   final bool isUser;
 
@@ -25,7 +29,9 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
   bool _isListening = false;
   final FlutterTts _flutterTts = FlutterTts();
   bool _isTtsEnabled = true;
-  final List<ChatMessage> _messages = [];
+  final AiChatHistoryService _historyService = AiChatHistoryService();
+  List<Conversation> _conversations = [];
+  Conversation? _currentConversation;
   final AiChatService _chatService = AiChatService();
   bool _isTyping = false;
   bool _useContext = false;
@@ -40,11 +46,36 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
+    _loadConversations();
+    _textController.addListener(() {
+      setState(() {}); // Rebuild to show/hide send button
+    });
+  }
+
+  void _loadConversations() async {
+    final conversations = _historyService.getAllConversations();
+    if (conversations.isEmpty) {
+      await _createNewConversation();
+    } else {
+      setState(() {
+        _conversations = conversations;
+        _currentConversation = conversations.first;
+      });
+    }
+  }
+
+  Future<void> _createNewConversation() async {
+    final newConversation = await _historyService.createNewConversation();
+    setState(() {
+      _conversations.insert(0, newConversation);
+      _currentConversation = newConversation;
+    });
   }
 
   @override
   void dispose() {
     _blinkingController.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
@@ -54,6 +85,7 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
   }
 
   void _startListening() async {
+    if (!_speechEnabled) return;
     await _speechToText.listen(onResult: _onSpeechResult);
     setState(() {
       _isListening = true;
@@ -85,18 +117,30 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
   }
 
   void _handleSubmitted(String text) async {
-    if (text.trim().isEmpty) return;
+    if (text.trim().isEmpty || _currentConversation == null) return;
+
+    final userMessage = model.ChatMessage(
+      text: text,
+      isUser: true,
+      timestamp: DateTime.now(),
+    );
+    await _historyService.addMessageToConversation(_currentConversation!.id, userMessage);
 
     _textController.clear();
     setState(() {
-      _messages.insert(0, ChatMessage(text: text, isUser: true));
       _isTyping = true;
     });
 
     final response = await _chatService.getResponse(text, _useContext);
 
+    final aiMessage = model.ChatMessage(
+      text: response,
+      isUser: false,
+      timestamp: DateTime.now(),
+    );
+    await _historyService.addMessageToConversation(_currentConversation!.id, aiMessage);
+
     setState(() {
-      _messages.insert(0, ChatMessage(text: response, isUser: false));
       _isTyping = false;
     });
 
@@ -107,7 +151,11 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Assistant'),
+        // leading: IconButton(
+        //   icon: const Icon(Icons.arrow_back),
+        //   onPressed: () => Navigator.of(context).pop(),
+        // ),
+        title: Text(_currentConversation?.title ?? 'AI Assistant'),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8.0),
@@ -155,6 +203,7 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
           ),
         ],
       ),
+      drawer: _buildConversationsDrawer(),
       body: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         color: _useContext ? Theme.of(context).colorScheme.primary.withOpacity(0.05) : Theme.of(context).scaffoldBackgroundColor,
@@ -164,9 +213,10 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
                 Expanded(
                   child: ListView.builder(
                   reverse: true,
-                  itemCount: _messages.length,
+                  itemCount: _currentConversation?.messages.length ?? 0,
                   itemBuilder: (context, index) {
-                    final message = _messages[index];
+                    // To show latest messages at the bottom
+                    final message = _currentConversation!.messages.reversed.toList()[index];
                     return _buildMessageBubble(message);
                   },
                 ),
@@ -188,7 +238,7 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message) {
+  Widget _buildMessageBubble(model.ChatMessage message) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 20.0),
       child: Row(
@@ -208,6 +258,91 @@ class _AiChatScreenState extends State<AiChatScreen> with SingleTickerProviderSt
                   color: message.isUser ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConversationsDrawer() {
+    return Drawer(
+      child: Column(
+        children: [
+          AppBar(
+            title: const Text('Chats'),
+            automaticallyImplyLeading: false,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: () async {
+                  await _createNewConversation();
+                  Navigator.of(context).pop(); // Close drawer
+                },
+                tooltip: 'New Chat',
+              ),
+            ],
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _conversations.length,
+              itemBuilder: (context, index) {
+                final conversation = _conversations[index];
+                final isSelected = conversation.id == _currentConversation?.id;
+                return ListTile(
+                  title: Text(conversation.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  subtitle: Text('${conversation.messages.length} messages'),
+                  selected: isSelected,
+                  selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  onTap: () {
+                    setState(() {
+                      _currentConversation = conversation;
+                    });
+                    Navigator.of(context).pop(); // Close drawer
+                  },
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Chat?'),
+                          content: const Text('This action cannot be undone.'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      ) ?? false;
+
+                      if (confirm) {
+                        final isDeletingCurrent = conversation.id == _currentConversation?.id;
+                        await _historyService.deleteConversation(conversation.id);
+                        setState(() {
+                          _conversations.removeWhere((c) => c.id == conversation.id);
+                          if (isDeletingCurrent) {
+                            if (_conversations.isNotEmpty) {
+                              _currentConversation = _conversations.first;
+                            } else {
+                              // This will trigger the creation of a new chat
+                              _currentConversation = null;
+                            }
+                          }
+                        });
+                        if (_currentConversation == null) {
+                          await _createNewConversation();
+                        }
+                        if (isDeletingCurrent) {
+                           Navigator.of(context).pop(); // Close drawer
+                        }
+                      }
+                    },
+                  ),
+                );
+              },
             ),
           ),
         ],

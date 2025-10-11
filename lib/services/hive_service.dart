@@ -15,6 +15,8 @@ import 'package:samapp/models/backup_settings.dart';
 import 'package:samapp/models/pomodoro_session.dart';
 import 'package:samapp/models/goal_milestone.dart';
 import 'package:samapp/models/legacy_capsule.dart';
+import 'package:samapp/models/ai_chat/conversation.dart';
+import 'package:samapp/models/ai_chat/chat_message.dart';
 
 class HiveService {
   static Future<void> init() async {
@@ -46,6 +48,8 @@ class HiveService {
     Hive.registerAdapter(PomodoroSessionAdapter());
     Hive.registerAdapter(GoalMilestoneAdapter());
     Hive.registerAdapter(LegacyCapsuleAdapter());
+    Hive.registerAdapter(ConversationAdapter());
+    Hive.registerAdapter(ChatMessageAdapter());
 
     // Open Boxes
     await Hive.openBox<Task>('tasks');
@@ -64,5 +68,6 @@ class HiveService {
     await Hive.openBox<PomodoroSession>('pomodoro_sessions');
     await Hive.openBox<GoalMilestone>('goal_milestones');
     await Hive.openBox<LegacyCapsule>('legacy_capsules');
+    await Hive.openBox<Conversation>('conversations');
   }
 }

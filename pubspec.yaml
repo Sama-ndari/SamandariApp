@@ -2,7 +2,7 @@ name: samapp
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -62,16 +62,16 @@ dependencies:
   # Location
   geolocator: ^12.0.0
   permission_handler: ^11.3.1
-  
+
   # Notifications
   flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4
-  
+
   # Cloud Storage
   google_sign_in: ^6.2.1
   googleapis: ^13.2.0
   googleapis_auth: ^1.6.0
-  
+
   # Widgets
   home_widget: ^0.6.0
   azlistview: ^2.0.0
@@ -105,7 +105,6 @@ flutter_launcher_icons:
   image_path: "assets/icon/icon.png"
 
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
