@@ -15,7 +15,8 @@ import 'package:samapp/widgets/animated_transitions.dart';
 import 'package:intl/intl.dart';
 import 'package:samapp/utils/money_formatter.dart';
 import 'package:samapp/main.dart';
-import 'dart:math';
+import 'dart:math' as math;
+import 'dart:math'; // For the Random class
 import 'package:samapp/widgets/daily_inspiration_widget.dart';
 import 'package:samapp/screens/add_edit_journal_entry_screen.dart';
 
@@ -108,7 +109,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Quick Actions with animations
             LayoutBuilder(
               builder: (context, constraints) {
-                final buttonWidth = (constraints.maxWidth - 24) / 4; // 24 = 8.0 * 3 (total horizontal padding)
+                // Each of the 4 buttons has 8px of horizontal padding (4 left, 4 right).
+                // Total padding = 4 * 8 = 32px.
+                final buttonWidth = math.max(0.0, (constraints.maxWidth - 32) / 4.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(

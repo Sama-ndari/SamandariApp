@@ -5,18 +5,24 @@ import 'package:samapp/models/legacy_capsule.dart';
 
 class EmailService {
   Future<bool> sendCapsuleEmail(LegacyCapsule capsule) async {
+    print('[EmailService] Starting email send process for capsule ${capsule.id}');
+    
     final user = dotenv.env['GMAIL_USER'];
     final password = dotenv.env['GMAIL_APP_PASSWORD'];
 
     if (user == null || password == null) {
-      print('Email credentials not found in .env file.');
+      print('[EmailService] ✗ Email credentials not found in .env file.');
+      print('[EmailService] Please ensure GMAIL_USER and GMAIL_APP_PASSWORD are set in .env');
       return false;
     }
 
     if (capsule.recipientEmail == null || capsule.recipientEmail!.isEmpty) {
-      print('Recipient email is missing.');
+      print('[EmailService] ✗ Recipient email is missing for capsule ${capsule.id}');
       return false;
     }
+
+    print('[EmailService] Using Gmail account: $user');
+    print('[EmailService] Sending to: ${capsule.recipientEmail}');
 
     final smtpServer = gmail(user, password);
 
@@ -35,15 +41,19 @@ class EmailService {
       """;
 
     try {
+      print('[EmailService] Attempting to send email...');
       final sendReport = await send(message, smtpServer);
-      print('Message sent: ' + sendReport.toString());
+      print('[EmailService] ✓ Message sent successfully: ' + sendReport.toString());
       return true;
     } on MailerException catch (e) {
-      print('Message not sent. \n' + e.toString());
+      print('[EmailService] ✗ Message not sent - MailerException: ' + e.toString());
       // Optionally, rethrow or handle specific exceptions
       for (var p in e.problems) {
-        print('Problem: ${p.code}: ${p.msg}');
+        print('[EmailService] Problem: ${p.code}: ${p.msg}');
       }
+      return false;
+    } catch (e) {
+      print('[EmailService] ✗ Unexpected error sending email: $e');
       return false;
     }
   }

@@ -225,6 +225,10 @@ class _ExpenseSummaryScreenState extends State<ExpenseSummaryScreen> {
         return Colors.amber;
       case ExpenseCategory.family:
         return Colors.brown;
+      case ExpenseCategory.personalCare:
+        return Colors.lightBlue;
+      case ExpenseCategory.lifestyle:
+        return Colors.indigo;
       case ExpenseCategory.other:
       default:
         return Colors.grey;
@@ -253,6 +257,10 @@ class _ExpenseSummaryScreenState extends State<ExpenseSummaryScreen> {
         return Icons.people;
       case ExpenseCategory.family:
         return Icons.family_restroom;
+      case ExpenseCategory.personalCare:
+        return Icons.spa;
+      case ExpenseCategory.lifestyle:
+        return Icons.nightlife;
       case ExpenseCategory.other:
       default:
         return Icons.money;

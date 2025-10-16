@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:samapp/models/legacy_capsule.dart';
 import 'package:samapp/screens/add_edit_legacy_capsule_screen.dart';
 import 'package:samapp/screens/view_legacy_capsule_screen.dart';
+import 'package:samapp/services/capsule_check_service.dart';
 import 'package:intl/intl.dart';
 
 class LegacyCapsuleListScreen extends StatefulWidget {
@@ -19,6 +20,11 @@ class _LegacyCapsuleListScreenState extends State<LegacyCapsuleListScreen> {
       appBar: AppBar(
         title: const Text('Legacy Capsules'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.email_outlined, color: Colors.blue),
+            tooltip: 'Test Email Sending',
+            onPressed: () => _testEmailSending(),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_sweep, color: Colors.redAccent),
             tooltip: 'Delete Read Capsules',
@@ -48,7 +54,12 @@ class _LegacyCapsuleListScreenState extends State<LegacyCapsuleListScreen> {
             itemCount: capsules.length,
             itemBuilder: (context, index) {
               final capsule = capsules[index];
-              final isLocked = DateTime.now().isBefore(capsule.openDate);
+              final now = DateTime.now();
+              final openDate = capsule.openDate;
+              // Compare only the date part, ignoring time
+              final isLocked = now.year < openDate.year || 
+                               (now.year == openDate.year && now.month < openDate.month) || 
+                               (now.year == openDate.year && now.month == openDate.month && now.day < openDate.day);
 
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
@@ -97,6 +108,43 @@ class _LegacyCapsuleListScreenState extends State<LegacyCapsuleListScreen> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  void _testEmailSending() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('Testing email sending...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      await CapsuleCheckService().checkAndSendCapsules();
+      Navigator.of(context).pop(); // Close loading dialog
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email check completed! Check console for details.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      Navigator.of(context).pop(); // Close loading dialog
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error during email check: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showDeleteReadConfirmation() {

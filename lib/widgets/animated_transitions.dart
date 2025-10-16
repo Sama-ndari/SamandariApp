@@ -176,7 +176,9 @@ class _ScaleInState extends State<ScaleIn> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return ScaleTransition(
       scale: _animation,
-      child: widget.child,
+      child: ClipRect(
+        child: widget.child,
+      ),
     );
   }
 }

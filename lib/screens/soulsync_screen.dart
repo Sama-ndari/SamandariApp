@@ -204,45 +204,45 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
   Color _getMoodColor(Mood mood) {
     switch (mood) {
       case Mood.happy:
-        return const Color(0xFF4CAF50);
+        return Colors.green;
       case Mood.sad:
-        return const Color(0xFF2196F3);
+        return Colors.blue;
       case Mood.neutral:
-        return const Color(0xFF9E9E9E);
+        return Colors.grey.shade400;
       case Mood.excited:
-        return const Color(0xFFFF9800);
+        return Colors.orange;
       case Mood.calm:
-        return const Color(0xFF009688);
+        return Colors.teal;
       case Mood.anxious:
-        return const Color(0xFF9C27B0);
+        return Colors.deepPurple;
       case Mood.grateful:
-        return const Color(0xFFE91E63);
+        return Colors.pink;
       case Mood.angry:
-        return const Color(0xFFF44336);
+        return Colors.red;
       case Mood.loved:
-        return const Color(0xFFFF4081);
+        return Colors.pinkAccent;
       case Mood.peaceful:
-        return const Color(0xFF00BCD4);
+        return Colors.cyan;
       case Mood.stressed:
-        return const Color(0xFFFF5722);
+        return Colors.deepOrange;
       case Mood.energetic:
-        return const Color(0xFFFFEB3B);
+        return Colors.amber;
       case Mood.tired:
-        return const Color(0xFF607D8B);
+        return Colors.blueGrey;
       case Mood.hopeful:
-        return const Color(0xFF8BC34A);
+        return Colors.lightGreen;
       case Mood.lonely:
-        return const Color(0xFF3F51B5);
+        return Colors.indigo;
       case Mood.confused:
-        return const Color(0xFF795548);
+        return Colors.brown;
       case Mood.proud:
-        return const Color(0xFFFFD700);
+        return Colors.yellow.shade800;
       case Mood.disappointed:
-        return const Color(0xFF757575);
+        return Colors.blueGrey.shade600;
       case Mood.content:
-        return const Color(0xFF66BB6A);
+        return Colors.lightBlue;
       case Mood.inspired:
-        return const Color(0xFFAB47BC);
+        return Colors.purpleAccent;
       default:
         return Colors.grey;
     }

@@ -22,7 +22,9 @@ import 'package:samapp/services/notification_service.dart';
 import 'package:samapp/theme/theme.dart';
 import 'package:samapp/services/theme_service.dart';
 import 'package:samapp/services/capsule_check_service.dart';
+import 'package:samapp/services/periodic_capsule_service.dart';
 import 'package:samapp/services/auto_backup_service.dart';
+import 'package:samapp/services/connectivity_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:samapp/models/habit.dart';
 import 'package:samapp/models/legacy_capsule.dart';
@@ -32,36 +34,42 @@ import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:math' as math;
 
+import 'dart:math' as math;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env"); 
+  await dotenv.load(fileName: ".env");
   await HiveService.init();
+
   await Hive.openBox<String>('dashboard_names');
   final themeService = ThemeService();
   await themeService.init();
-  
+
   // Check for recurring tasks
   final recurringTaskService = RecurringTaskService();
   await recurringTaskService.checkAndCreateRecurringTasks();
-  
+
   // Initialize auto backup
   final autoBackupService = AutoBackupService();
   await autoBackupService.init();
   await autoBackupService.performAutoBackup();
-  
-  // Perform capsule check on startup
-  await CapsuleCheckService().checkAndSendCapsules();
-  
+
+  // Start periodic capsule checking service
+  PeriodicCapsuleService.startPeriodicCheck();
+
   // Initialize notifications
   final notificationService = NotificationService();
   await notificationService.initialize();
+
+  // Start listening for connectivity changes
+  ConnectivityService().startListening();
 
   runApp(MyApp(themeService: themeService));
 }
 
 class MyApp extends StatelessWidget {
   final ThemeService themeService;
-  
+
   const MyApp({super.key, required this.themeService});
 
   @override
@@ -109,6 +117,27 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, Ti
     WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // App came to foreground
+        PeriodicCapsuleService.onAppResumed();
+        break;
+      case AppLifecycleState.paused:
+        // App went to background
+        PeriodicCapsuleService.onAppPaused();
+        break;
+      case AppLifecycleState.detached:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        // App is being terminated or inactive
+        break;
+    }
   }
 
 
@@ -288,7 +317,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, Ti
               } else if (value == 'ai_hub') {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => AiHubScreen(),
+                    builder: (context) => const AiHubScreen(),
                   ),
                 );
               } else if (value == 'settings') {

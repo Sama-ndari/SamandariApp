@@ -266,7 +266,7 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
       case Mood.sad:
         return const Color(0xFF2196F3);
       case Mood.neutral:
-        return const Color(0xFF9E9E9E);
+        return const Color(0xFFBDBDBD);
       case Mood.excited:
         return const Color(0xFFFF9800);
       case Mood.calm:
@@ -296,7 +296,7 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
       case Mood.proud:
         return const Color(0xFFFFD700);
       case Mood.disappointed:
-        return const Color(0xFF757575);
+        return const Color(0xFF616161);
       case Mood.content:
         return const Color(0xFF66BB6A);
       case Mood.inspired:
