@@ -301,8 +301,6 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
         return const Color(0xFF66BB6A);
       case Mood.inspired:
         return const Color(0xFFAB47BC);
-      default:
-        return Colors.grey;
     }
   }
 
@@ -348,8 +346,6 @@ class _AddEditJournalEntryScreenState extends State<AddEditJournalEntryScreen> {
         return Icons.check_circle_outline;
       case Mood.inspired:
         return Icons.auto_awesome;
-      default:
-        return Icons.sentiment_neutral;
     }
   }
 }

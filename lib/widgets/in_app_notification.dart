@@ -145,7 +145,7 @@ class _NotificationBannerState extends State<_NotificationBanner>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.outline.withOpacity(0.2),
+                        color: theme.colorScheme.outline.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Row(
@@ -154,7 +154,7 @@ class _NotificationBannerState extends State<_NotificationBanner>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -184,7 +184,7 @@ class _NotificationBannerState extends State<_NotificationBanner>
                               Text(
                                 widget.message,
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,

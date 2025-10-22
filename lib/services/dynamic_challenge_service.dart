@@ -111,6 +111,8 @@ class DynamicChallengeService {
         icon: Icons.repeat,
       );
     }
+    
+    return null; // No low habit streak found
   }
 
   /// Finds the highest spending category in the last 30 days.

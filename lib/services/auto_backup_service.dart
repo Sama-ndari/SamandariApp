@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:hive/hive.dart';
-import 'package:samapp/models/backup_settings.dart';
 import 'package:samapp/services/backup_service.dart';
+import 'package:samapp/services/logging_service.dart';
+import 'package:samapp/models/backup_settings.dart';
 
 class AutoBackupService {
   final Box<BackupSettings> _settingsBox = Hive.box<BackupSettings>('backup_settings');
@@ -91,7 +93,7 @@ class AutoBackupService {
 
       return filePath;
     } catch (e) {
-      print('Auto backup failed: $e');
+      AppLogger.error('Auto backup failed', e);
       return null;
     }
   }
@@ -124,7 +126,7 @@ class AutoBackupService {
         }
       }
     } catch (e) {
-      print('Failed to clean old backups: $e');
+      AppLogger.error('Failed to clean old backups', e);
     }
   }
 

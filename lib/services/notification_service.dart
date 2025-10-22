@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:samapp/services/logging_service.dart';
 import 'package:hive/hive.dart';
 import 'package:samapp/models/reminder.dart';
 import 'package:samapp/models/task.dart' as task_model;
@@ -44,7 +45,7 @@ class NotificationService {
 
   void _onNotificationTapped(NotificationResponse response) {
     // Handle notification tap
-    print('Notification tapped: ${response.payload}');
+    AppLogger.info('Notification tapped: ${response.payload}');
   }
 
   // Schedule a notification

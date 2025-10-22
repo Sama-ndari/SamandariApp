@@ -27,10 +27,10 @@ class MuseService {
 
     String context = '';
     if (recentNotes.isNotEmpty) {
-      context += 'Recent Notes: ' + recentNotes.take(3).map((n) => n.title).join(', ');
+      context += 'Recent Notes: ${recentNotes.take(3).map((n) => n.title).join(', ')}';
     }
     if (recentJournals.isNotEmpty) {
-      context += '\nRecent Journal Themes: ' + recentJournals.take(3).map((j) => j.mood.toString().split('.').last).join(', ');
+      context += '\nRecent Journal Themes: ${recentJournals.take(3).map((j) => j.mood.toString().split('.').last).join(', ')}';
     }
 
     return context.trim();
@@ -205,7 +205,7 @@ class MuseService {
     final noteBox = Hive.box<Note>('notes');
     final newNote = Note()
       ..id = const Uuid().v4()
-      ..title = museContent.split(' ').take(5).join(' ') + '...'
+      ..title = '${museContent.split(' ').take(5).join(' ')}...'
       ..content = museContent
       ..tags = ['AI Muse']
       ..createdAt = DateTime.now()

@@ -127,7 +127,7 @@ class _AddEditGoalScreenState extends State<AddEditGoalScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<GoalType>(
-                value: _type,
+                initialValue: _type,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: GoalType.values.map((type) {
                   return DropdownMenuItem(

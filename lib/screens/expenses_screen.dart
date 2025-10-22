@@ -52,15 +52,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 (spendingByCategory[expense.category] ?? 0) + expense.amount;
           }
 
-          return Column(
-            children: [
-              _buildDateSelector(),
-              _buildTotalExpensesCard(totalExpenses, expenses.length),
-              _buildChart(spendingByCategory),
-              Expanded(
-                child: _buildExpenseList(expenses),
-              ),
-            ],
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildDateSelector(),
+                _buildTotalExpensesCard(totalExpenses, expenses.length),
+                _buildChart(spendingByCategory),
+                _buildExpenseList(expenses),
+              ],
+            ),
           );
         },
       ),
@@ -521,6 +521,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
 
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 80), // Add padding to prevent FAB overlap
       itemCount: expenses.length,
       itemBuilder: (context, index) {

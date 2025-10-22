@@ -1,0 +1,343 @@
+{
+  "@@locale": "en",
+  "appTitle": "Samandari",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  
+  "dashboard": "Dashboard",
+  "@dashboard": {
+    "description": "Dashboard screen title"
+  },
+  
+  "tasks": "Tasks",
+  "@tasks": {
+    "description": "Tasks screen title"
+  },
+  
+  "expenses": "Expenses",
+  "@expenses": {
+    "description": "Expenses screen title"
+  },
+  
+  "notes": "Notes",
+  "@notes": {
+    "description": "Notes screen title"
+  },
+  
+  "water": "Water",
+  "@water": {
+    "description": "Water tracking screen title"
+  },
+  
+  "habits": "Habits",
+  "@habits": {
+    "description": "Habits screen title"
+  },
+  
+  "debts": "Debts",
+  "@debts": {
+    "description": "Debts screen title"
+  },
+  
+  "soulSync": "SoulSync",
+  "@soulSync": {
+    "description": "SoulSync journaling screen title"
+  },
+  
+  "goals": "Goals",
+  "@goals": {
+    "description": "Goals screen title"
+  },
+  
+  "addTask": "Add Task",
+  "@addTask": {
+    "description": "Button text to add a new task"
+  },
+  
+  "editTask": "Edit Task",
+  "@editTask": {
+    "description": "Button text to edit a task"
+  },
+  
+  "deleteTask": "Delete Task",
+  "@deleteTask": {
+    "description": "Button text to delete a task"
+  },
+  
+  "taskTitle": "Task Title",
+  "@taskTitle": {
+    "description": "Label for task title input field"
+  },
+  
+  "taskDescription": "Description",
+  "@taskDescription": {
+    "description": "Label for task description input field"
+  },
+  
+  "dueDate": "Due Date",
+  "@dueDate": {
+    "description": "Label for due date selection"
+  },
+  
+  "priority": "Priority",
+  "@priority": {
+    "description": "Label for priority selection"
+  },
+  
+  "high": "High",
+  "@high": {
+    "description": "High priority option"
+  },
+  
+  "medium": "Medium",
+  "@medium": {
+    "description": "Medium priority option"
+  },
+  
+  "low": "Low",
+  "@low": {
+    "description": "Low priority option"
+  },
+  
+  "save": "Save",
+  "@save": {
+    "description": "Save button text"
+  },
+  
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button text"
+  },
+  
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button text"
+  },
+  
+  "noTasksYet": "No tasks yet",
+  "@noTasksYet": {
+    "description": "Empty state title when no tasks exist"
+  },
+  
+  "createFirstTask": "Create your first task to get started!",
+  "@createFirstTask": {
+    "description": "Empty state message for tasks"
+  },
+  
+  "waterIntakeGoal": "Daily Goal: {goal}ml",
+  "@waterIntakeGoal": {
+    "description": "Water intake daily goal display",
+    "placeholders": {
+      "goal": {
+        "type": "int",
+        "example": "2000"
+      }
+    }
+  },
+  
+  "waterIntakeProgress": "{current}ml of {goal}ml",
+  "@waterIntakeProgress": {
+    "description": "Water intake progress display",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "1200"
+      },
+      "goal": {
+        "type": "int",
+        "example": "2000"
+      }
+    }
+  },
+  
+  "congratulations": "Congratulations!",
+  "@congratulations": {
+    "description": "Congratulations message"
+  },
+  
+  "goalReached": "You've reached your daily water goal!",
+  "@goalReached": {
+    "description": "Message when water goal is reached"
+  },
+  
+  "addExpense": "Add Expense",
+  "@addExpense": {
+    "description": "Button text to add new expense"
+  },
+  
+  "amount": "Amount",
+  "@amount": {
+    "description": "Label for amount input field"
+  },
+  
+  "category": "Category",
+  "@category": {
+    "description": "Label for category selection"
+  },
+  
+  "description": "Description",
+  "@description": {
+    "description": "Label for description input field"
+  },
+  
+  "noExpensesYet": "No expenses yet",
+  "@noExpensesYet": {
+    "description": "Empty state title when no expenses exist"
+  },
+  
+  "startTrackingExpenses": "Start tracking your expenses to manage your budget!",
+  "@startTrackingExpenses": {
+    "description": "Empty state message for expenses"
+  },
+  
+  "addNote": "Add Note",
+  "@addNote": {
+    "description": "Button text to add new note"
+  },
+  
+  "noteTitle": "Note Title",
+  "@noteTitle": {
+    "description": "Label for note title input field"
+  },
+  
+  "noteContent": "Content",
+  "@noteContent": {
+    "description": "Label for note content input field"
+  },
+  
+  "noNotesYet": "No notes yet",
+  "@noNotesYet": {
+    "description": "Empty state title when no notes exist"
+  },
+  
+  "createFirstNote": "Create your first note to capture your thoughts!",
+  "@createFirstNote": {
+    "description": "Empty state message for notes"
+  },
+  
+  "search": "Search",
+  "@search": {
+    "description": "Search placeholder text"
+  },
+  
+  "searchResults": "Search Results",
+  "@searchResults": {
+    "description": "Search results screen title"
+  },
+  
+  "noResultsFound": "No results found",
+  "@noResultsFound": {
+    "description": "Message when search returns no results"
+  },
+  
+  "tryDifferentKeywords": "Try different keywords or check your spelling",
+  "@tryDifferentKeywords": {
+    "description": "Suggestion when no search results found"
+  },
+  
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  
+  "theme": "Theme",
+  "@theme": {
+    "description": "Theme settings label"
+  },
+  
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Dark mode toggle label"
+  },
+  
+  "lightMode": "Light Mode",
+  "@lightMode": {
+    "description": "Light mode option"
+  },
+  
+  "systemMode": "System",
+  "@systemMode": {
+    "description": "System theme mode option"
+  },
+  
+  "language": "Language",
+  "@language": {
+    "description": "Language settings label"
+  },
+  
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications settings label"
+  },
+  
+  "backup": "Backup",
+  "@backup": {
+    "description": "Backup settings label"
+  },
+  
+  "backupNow": "Backup Now",
+  "@backupNow": {
+    "description": "Button text to create backup"
+  },
+  
+  "restore": "Restore",
+  "@restore": {
+    "description": "Button text to restore from backup"
+  },
+  
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading state message"
+  },
+  
+  "error": "Error",
+  "@error": {
+    "description": "Error state title"
+  },
+  
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button text"
+  },
+  
+  "success": "Success",
+  "@success": {
+    "description": "Success message"
+  },
+  
+  "taskCompleted": "Task completed!",
+  "@taskCompleted": {
+    "description": "Message when task is marked as completed"
+  },
+  
+  "taskAdded": "Task added successfully",
+  "@taskAdded": {
+    "description": "Message when task is added"
+  },
+  
+  "expenseAdded": "Expense added successfully",
+  "@expenseAdded": {
+    "description": "Message when expense is added"
+  },
+  
+  "noteAdded": "Note added successfully",
+  "@noteAdded": {
+    "description": "Message when note is added"
+  },
+  
+  "backupCreated": "Backup created successfully",
+  "@backupCreated": {
+    "description": "Message when backup is created"
+  },
+  
+  "dataRestored": "Data restored successfully",
+  "@dataRestored": {
+    "description": "Message when data is restored"
+  }
+}

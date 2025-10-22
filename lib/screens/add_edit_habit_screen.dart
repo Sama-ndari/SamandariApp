@@ -235,10 +235,10 @@ class _AddEditHabitScreenState extends State<AddEditHabitScreen> {
           const Text('Complete '),
           DropdownButton<int>(
             value: _weeklyTarget,
-            items: List.generate(7, (i) => i + 1).map((num) {
+            items: List.generate(7, (i) => i + 1).map((count) {
               return DropdownMenuItem(
-                value: num,
-                child: Text(num.toString()),
+                value: count,
+                child: Text(count.toString()),
               );
             }).toList(),
             onChanged: (value) {

@@ -123,6 +123,17 @@ const List<String> courageMissions = [
 ];
 
 const List<String> eqAndSocialMissions = [
+  "One Lunch Date With A Friend.",
+  "One Full Day Out In Nature.",
+  "24 Hours With No Social Media.",
+  "One Day Doing Absolutely Nothing.",
+  "One Day Trying Something Brand New.",
+  "One At-home Movie Night With Your Family.",
+  "One Day Serving Others.",
+  "One Self-care Or Pamper Day Just For Yourself.",
+  "One Day Waking Up Early To Watch The Sunrise.",
+  "One Day Watching The Sunset.",
+  "One Solo Cafe Date For Yourself.",
   "Notice one emotion you feel today and name it clearly.",
   "When someone talks, focus only on understanding — not replying.",
   "Say 'hi' to one stranger, even if it’s just eye contact and a smile.",

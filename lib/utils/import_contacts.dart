@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:hive/hive.dart';
 import 'package:samapp/models/contact.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:samapp/services/logging_service.dart';
 import 'package:uuid/uuid.dart';
 
 class ContactImporter {
@@ -36,7 +39,7 @@ class ContactImporter {
       
       return imported;
     } catch (e) {
-      print('Error importing contacts: $e');
+      AppLogger.error('Error importing contacts', e);
       return 0;
     }
   }

@@ -2,7 +2,6 @@ import 'package:hive/hive.dart';
 import 'package:samapp/models/task.dart';
 import 'package:samapp/models/expense.dart';
 import 'package:samapp/models/habit.dart';
-import 'package:samapp/models/budget.dart';
 import 'package:samapp/services/budget_service.dart';
 import 'package:samapp/utils/money_formatter.dart';
 

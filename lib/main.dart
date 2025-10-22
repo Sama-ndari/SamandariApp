@@ -9,8 +9,6 @@ import 'package:samapp/screens/water_screen.dart';
 import 'package:samapp/screens/contacts_screen.dart';
 import 'package:samapp/screens/goals_screen.dart';
 import 'package:samapp/screens/dashboard_screen.dart';
-import 'package:samapp/screens/backup_restore_screen.dart';
-import 'package:samapp/screens/statistics_screen.dart';
 import 'package:samapp/screens/enhanced_analytics_screen.dart';
 import 'package:samapp/screens/calendar_screen.dart';
 import 'package:samapp/screens/global_search_screen.dart';
@@ -21,19 +19,14 @@ import 'package:samapp/services/hive_service.dart';
 import 'package:samapp/services/notification_service.dart';
 import 'package:samapp/theme/theme.dart';
 import 'package:samapp/services/theme_service.dart';
-import 'package:samapp/services/capsule_check_service.dart';
 import 'package:samapp/services/periodic_capsule_service.dart';
 import 'package:samapp/services/auto_backup_service.dart';
 import 'package:samapp/services/connectivity_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:samapp/models/habit.dart';
-import 'package:samapp/models/legacy_capsule.dart';
 import 'package:samapp/services/recurring_task_service.dart';
 import 'package:samapp/services/navigation_service.dart'; // This is the missing import
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'dart:math' as math;
-
 import 'dart:math' as math;
 
 void main() async {
@@ -414,17 +407,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver, Ti
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
       ),
-    );
-  }
-
-  Widget _buildNavItem({required IconData icon, required int index, required String label}) {
-    return IconButton(
-      icon: Icon(
-        icon,
-        color: _selectedIndex == index ? Theme.of(context).colorScheme.primary : Colors.grey,
-      ),
-      onPressed: () => _onItemTapped(index),
-      tooltip: label,
     );
   }
 

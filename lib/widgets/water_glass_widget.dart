@@ -108,12 +108,10 @@ class _WaterGlassPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
 
     // Draw glass outline - proper glass shape (wider at top)
     final glassPaint = Paint()
-      ..color = Colors.blue.shade200.withOpacity(0.4)
+      ..color = Colors.blue.shade200.withValues(alpha: 0.4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
 
@@ -128,7 +126,7 @@ class _WaterGlassPainter extends CustomPainter {
 
     // Draw glass shine effect
     final shinePaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = Colors.white.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
     
     final shinePath = Path()
@@ -189,7 +187,7 @@ class _WaterGlassPainter extends CustomPainter {
       // Add bubbles/sparkles
       if (progress >= 1.0) {
         final sparklePaint = Paint()
-          ..color = Colors.white.withOpacity(0.7)
+          ..color = Colors.white.withValues(alpha: 0.7)
           ..style = PaintingStyle.fill;
         
         // Multiple sparkles at different positions
@@ -208,7 +206,7 @@ class _WaterGlassPainter extends CustomPainter {
       // Add smaller bubbles when water is being added
       if (progress > 0 && progress < 1.0) {
         final bubblePaint = Paint()
-          ..color = Colors.white.withOpacity(0.4)
+          ..color = Colors.white.withValues(alpha: 0.4)
           ..style = PaintingStyle.fill;
         
         for (int i = 0; i < 3; i++) {

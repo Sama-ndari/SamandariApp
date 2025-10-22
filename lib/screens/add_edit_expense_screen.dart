@@ -123,7 +123,7 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<ExpenseCategory>(
-                value: _category,
+                initialValue: _category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: ExpenseCategory.values.map((category) {
                   return DropdownMenuItem(

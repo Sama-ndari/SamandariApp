@@ -1,3 +1,4 @@
 {
-  "CodeGPT.apiKey": "Gemini CLI"
+  "CodeGPT.apiKey": "Gemini CLI",
+  "cmake.sourceDirectory": "/home/samandari/Documents/ASYST/Perso/samapp/linux/flutter"
 }

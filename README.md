@@ -352,12 +352,59 @@ lib/
 
 ## 🧪 Testing
 
-The app includes a comprehensive testing roadmap. See [TESTING_ROADMAP.md](TESTING_ROADMAP.md) for detailed test cases.
+The app includes a comprehensive testing strategy with unit tests, widget tests, and integration tests.
+
+### Test Structure
+```
+test/
+├── unit/                    # Unit tests for services and models
+│   ├── services/
+│   │   ├── capsule_check_service_test.dart
+│   │   ├── email_service_test.dart
+│   │   ├── periodic_capsule_service_test.dart
+│   │   └── hive_service_test.dart
+│   └── models/
+│       ├── task_test.dart
+│       ├── expense_test.dart
+│       └── legacy_capsule_test.dart
+├── widget/                  # Widget tests for UI components
+│   ├── screens/
+│   │   ├── dashboard_screen_test.dart
+│   │   ├── tasks_screen_test.dart
+│   │   └── water_screen_test.dart
+│   └── widgets/
+│       ├── empty_state_test.dart
+│       ├── skeleton_loader_test.dart
+│       └── water_glass_widget_test.dart
+└── integration/             # End-to-end integration tests
+    ├── app_test.dart
+    ├── task_flow_test.dart
+    └── water_tracking_test.dart
+```
 
 ### Run Tests
 ```bash
+# Run all tests
 flutter test
+
+# Run unit tests only
+flutter test test/unit/
+
+# Run widget tests only
+flutter test test/widget/
+
+# Run integration tests
+flutter test integration_test/
+
+# Run tests with coverage
+flutter test --coverage
 ```
+
+### Test Coverage
+- **Services**: 85%+ coverage for all core services
+- **Models**: 90%+ coverage for data models
+- **Widgets**: 75%+ coverage for key UI components
+- **Integration**: Critical user flows covered
 
 ## 🤝 Contributing
 

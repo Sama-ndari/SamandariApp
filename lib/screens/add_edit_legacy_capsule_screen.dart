@@ -4,7 +4,6 @@ import 'package:samapp/models/legacy_capsule.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:io';
 import 'dart:async';
 import 'package:samapp/screens/share_legacy_capsule_screen.dart';
 

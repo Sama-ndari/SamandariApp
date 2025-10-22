@@ -327,7 +327,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
           
           // Clear All Notifications
           Card(
-            color: Colors.red.withOpacity(0.1),
+            color: Colors.red.withValues(alpha: 0.1),
             child: ListTile(
               leading: const Icon(Icons.clear_all, color: Colors.red),
               title: const Text(

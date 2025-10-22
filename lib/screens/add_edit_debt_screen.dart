@@ -162,7 +162,7 @@ class _AddEditDebtScreenState extends State<AddEditDebtScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<DebtType>(
-                value: _type,
+                initialValue: _type,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: DebtType.values.map((type) {
                   return DropdownMenuItem(

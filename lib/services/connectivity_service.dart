@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:samapp/services/periodic_capsule_service.dart';
+import 'package:samapp/services/logging_service.dart';
 
 class ConnectivityService {
   StreamSubscription<ConnectivityResult>? _subscription;
@@ -17,7 +18,7 @@ class ConnectivityService {
 
       // If the status changes from offline to online, trigger the check.
       if (_isOffline && isOnline) {
-        print('[ConnectivityService] Connection restored. Retrying capsule check...');
+        AppLogger.info('Connection restored. Retrying capsule check...');
         PeriodicCapsuleService.onAppResumed();
       }
 

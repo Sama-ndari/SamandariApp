@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:samapp/data/missions.dart';
+import 'package:samapp/services/logging_service.dart';
+import 'package:samapp/widgets/in_app_notification.dart';
 import 'package:hive/hive.dart';
 import 'package:samapp/models/task.dart';
 import 'package:samapp/services/navigation_service.dart';
@@ -95,7 +97,7 @@ class MissionService {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  color: category.color.withOpacity(0.1),
+                  color: category.color.withValues(alpha: 0.1),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -208,15 +210,17 @@ class MissionService {
         }
       }
     } catch (e) {
-      print('Error fetching dynamic mission: $e');
+      AppLogger.error('Error fetching dynamic mission', e);
     } finally {
-      if (Navigator.of(context).canPop()) {
+      if (context.mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
 
       mission ??= _getStaticMission(category);
 
-      _showMissionDialog(context, category, mission!, isFromApi);
+      if (context.mounted) {
+        _showMissionDialog(context, category, mission, isFromApi);
+      }
     }
   }
 

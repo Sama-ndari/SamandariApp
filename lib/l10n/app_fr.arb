@@ -1,0 +1,81 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Samandari",
+  
+  "dashboard": "Tableau de bord",
+  "tasks": "Tâches",
+  "expenses": "Dépenses",
+  "notes": "Notes",
+  "water": "Eau",
+  "habits": "Habitudes",
+  "debts": "Dettes",
+  "soulSync": "SoulSync",
+  "goals": "Objectifs",
+  
+  "addTask": "Ajouter une tâche",
+  "editTask": "Modifier la tâche",
+  "deleteTask": "Supprimer la tâche",
+  "taskTitle": "Titre de la tâche",
+  "taskDescription": "Description",
+  "dueDate": "Date d'échéance",
+  "priority": "Priorité",
+  
+  "high": "Élevée",
+  "medium": "Moyenne",
+  "low": "Faible",
+  
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "confirm": "Confirmer",
+  
+  "noTasksYet": "Aucune tâche pour le moment",
+  "createFirstTask": "Créez votre première tâche pour commencer !",
+  
+  "waterIntakeGoal": "Objectif quotidien : {goal}ml",
+  "waterIntakeProgress": "{current}ml sur {goal}ml",
+  "congratulations": "Félicitations !",
+  "goalReached": "Vous avez atteint votre objectif quotidien d'eau !",
+  
+  "addExpense": "Ajouter une dépense",
+  "amount": "Montant",
+  "category": "Catégorie",
+  "description": "Description",
+  "noExpensesYet": "Aucune dépense pour le moment",
+  "startTrackingExpenses": "Commencez à suivre vos dépenses pour gérer votre budget !",
+  
+  "addNote": "Ajouter une note",
+  "noteTitle": "Titre de la note",
+  "noteContent": "Contenu",
+  "noNotesYet": "Aucune note pour le moment",
+  "createFirstNote": "Créez votre première note pour capturer vos pensées !",
+  
+  "search": "Rechercher",
+  "searchResults": "Résultats de recherche",
+  "noResultsFound": "Aucun résultat trouvé",
+  "tryDifferentKeywords": "Essayez des mots-clés différents ou vérifiez l'orthographe",
+  
+  "settings": "Paramètres",
+  "theme": "Thème",
+  "darkMode": "Mode sombre",
+  "lightMode": "Mode clair",
+  "systemMode": "Système",
+  "language": "Langue",
+  "notifications": "Notifications",
+  
+  "backup": "Sauvegarde",
+  "backupNow": "Sauvegarder maintenant",
+  "restore": "Restaurer",
+  
+  "loading": "Chargement...",
+  "error": "Erreur",
+  "retry": "Réessayer",
+  "success": "Succès",
+  
+  "taskCompleted": "Tâche terminée !",
+  "taskAdded": "Tâche ajoutée avec succès",
+  "expenseAdded": "Dépense ajoutée avec succès",
+  "noteAdded": "Note ajoutée avec succès",
+  "backupCreated": "Sauvegarde créée avec succès",
+  "dataRestored": "Données restaurées avec succès"
+}

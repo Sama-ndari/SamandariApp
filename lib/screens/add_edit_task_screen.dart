@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:samapp/models/task.dart';
-import 'package:samapp/models/reminder.dart';
 import 'package:samapp/widgets/loading_overlay.dart';
 import 'package:samapp/services/haptic_service.dart';
 import 'package:samapp/widgets/in_app_notification.dart';

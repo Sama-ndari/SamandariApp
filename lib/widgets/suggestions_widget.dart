@@ -55,7 +55,7 @@ class SuggestionsWidget extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.2),
+          backgroundColor: color.withValues(alpha: 0.2),
           child: Icon(
             _getIconForType(suggestion.type),
             color: color,
@@ -83,7 +83,7 @@ class SuggestionsWidget extends StatelessWidget {
   }
 
   void _handleSuggestionTap(BuildContext context, Suggestion suggestion) {
-    Widget? screen;
+    Widget screen;
     
     // Navigate to the relevant module based on suggestion type
     switch (suggestion.type) {
@@ -106,11 +106,9 @@ class SuggestionsWidget extends StatelessWidget {
         break;
     }
     
-    if (screen != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => screen!),
-      );
-    }
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => screen),
+    );
   }
 
   IconData _getIconForType(SuggestionType type) {

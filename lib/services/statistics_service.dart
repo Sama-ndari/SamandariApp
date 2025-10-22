@@ -2,7 +2,6 @@ import 'package:hive/hive.dart';
 import 'package:samapp/models/task.dart';
 import 'package:samapp/models/expense.dart';
 import 'package:samapp/models/habit.dart';
-import 'package:samapp/models/goal.dart';
 import 'package:samapp/models/note.dart';
 import 'package:samapp/models/water_intake.dart';
 import 'package:samapp/models/app_statistics.dart';
@@ -12,7 +11,6 @@ class StatisticsService {
   final Box<Task> _taskBox = Hive.box<Task>('tasks');
   final Box<Expense> _expenseBox = Hive.box<Expense>('expenses');
   final Box<Habit> _habitBox = Hive.box<Habit>('habits');
-  final Box<Goal> _goalBox = Hive.box<Goal>('goals');
   final Box<Note> _noteBox = Hive.box<Note>('notes');
   final Box<WaterIntake> _waterBox = Hive.box<WaterIntake>('water_intake');
   final Box<AppStatistics> _statsBox = Hive.box<AppStatistics>('statistics');

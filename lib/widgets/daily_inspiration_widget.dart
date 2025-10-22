@@ -1,11 +1,12 @@
+import 'dart:convert';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:samapp/data/quotes_data.dart';
 import 'package:samapp/models/quote.dart';
+import 'package:samapp/services/logging_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 enum QuoteCategory { inspirational, scripture, stoic, techAndBusiness }
 
@@ -81,7 +82,7 @@ class _DailyInspirationWidgetState extends State<DailyInspirationWidget> {
       }
     } catch (e) {
       // Silently fail and fallback to static quote
-      print('Failed to get dynamic quote: $e');
+      AppLogger.error('Failed to get dynamic quote', e);
     }
     return null;
   }
@@ -157,7 +158,7 @@ class _DailyInspirationWidgetState extends State<DailyInspirationWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
